@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>电子衣橱 - Smart Wardrobe</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="app">
+        <!-- 顶部导航 -->
+        <nav class="nav-bar">
+            <div class="nav-left">
+                <div class="nav-title">电子衣橱</div>
+                <div class="ai-status" id="ai-status" title="点击刷新 AI 状态">
+                    <span class="ai-dot" id="ai-dot"></span>
+                    <span class="ai-text" id="ai-text">检测中...</span>
+                </div>
+            </div>
+            <div class="nav-tabs">
+                <button class="nav-tab active" data-page="wardrobe">我的衣橱</button>
+                <button class="nav-tab" data-page="recommend">搭配推荐</button>
+            </div>
+        </nav>
+
+        <!-- 衣橱页面 -->
+        <div class="page active" id="page-wardrobe">
+            <div class="wardrobe-header">
+                <div class="category-tabs">
+                    <button class="cat-tab active" data-cat="all">全部</button>
+                    <button class="cat-tab" data-cat="上衣">上衣</button>
+                    <button class="cat-tab" data-cat="下装">下装</button>
+                    <button class="cat-tab" data-cat="连衣裙">连衣裙</button>
+                    <button class="cat-tab" data-cat="外套">外套</button>
+                    <button class="cat-tab" data-cat="鞋子">鞋子</button>
+                    <button class="cat-tab" data-cat="饰品">饰品</button>
+                </div>
+                <button class="btn-add" id="btn-show-add">+ 添加衣物</button>
+            </div>
+            <div class="wardrobe-grid" id="wardrobe-grid">
+                <div class="empty-hint">衣橱空空如也，点击"添加衣物"开始整理吧</div>
+            </div>
+        </div>
+
+        <!-- 搭配推荐页面 -->
+        <div class="page" id="page-recommend">
+            <div class="recommend-panel">
+                <div class="recommend-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>城市</label>
+                            <input type="text" id="rec-city" value="北京" placeholder="输入城市">
+                        </div>
+                        <div class="form-group">
+                            <label>场合</label>
+                            <select id="rec-occasion">
+                                <option value="日常">日常</option>
+                                <option value="正式">正式</option>
+                                <option value="商务">商务</option>
+                                <option value="约会">约会</option>
+                                <option value="聚会">聚会</option>
+                                <option value="运动">运动</option>
+                                <option value="户外">户外</option>
+                                <option value="面试">面试</option>
+                                <option value="逛街">逛街</option>
+                            </select>
+                        </div>
+                        <button class="btn-recommend" id="btn-recommend">生成搭配</button>
+                    </div>
+                </div>
+
+                <!-- 天气展示 -->
+                <div class="weather-card" id="weather-card" style="display:none">
+                    <div class="weather-icon" id="weather-icon"></div>
+                    <div class="weather-info">
+                        <div class="weather-temp"><span id="weather-temp">--</span>°C</div>
+                        <div class="weather-desc" id="weather-desc"></div>
+                        <div class="weather-detail">
+                            <span>体感 <span id="weather-feels">--</span>°C</span>
+                            <span>湿度 <span id="weather-humid">--</span>%</span>
+                            <span>风力 <span id="weather-wind">--</span>km/h</span>
+                        </div>
+                    </div>
+                    <div class="weather-tip" id="weather-tip"></div>
+                </div>
+
+                <!-- 搭配结果 -->
+                <div class="outfits-container" id="outfits-container"></div>
+            </div>
+        </div>
+
+        <!-- 添加衣物弹窗 -->
+        <div class="modal-overlay" id="modal-add">
+            <div class="modal">
+                <div class="modal-header">
+                    <span>添加衣物</span>
+                    <button class="modal-close" id="btn-close-modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>名称 *</label>
+                        <input type="text" id="add-name" placeholder="例如：白色衬衫">
+                    </div>
+                    <div class="form-group">
+                        <label>分类 *</label>
+                        <select id="add-category">
+                            <option value="上衣">上衣</option>
+                            <option value="下装">下装</option>
+                            <option value="连衣裙">连衣裙</option>
+                            <option value="外套">外套</option>
+                            <option value="鞋子">鞋子</option>
+                            <option value="饰品">饰品</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>颜色</label>
+                        <select id="add-color">
+                            <option value="白色">白色</option><option value="黑色">黑色</option>
+                            <option value="灰色">灰色</option><option value="蓝色">蓝色</option>
+                            <option value="红色">红色</option><option value="粉色">粉色</option>
+                            <option value="绿色">绿色</option><option value="紫色">紫色</option>
+                            <option value="黄色">黄色</option><option value="橙色">橙色</option>
+                            <option value="棕色">棕色</option><option value="卡其色">卡其色</option>
+                            <option value="米色">米色</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>风格</label>
+                        <select id="add-style">
+                            <option value="休闲">休闲</option>
+                            <option value="正式">正式</option>
+                            <option value="运动">运动</option>
+                            <option value="约会">约会</option>
+                            <option value="日常">日常</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>厚度</label>
+                        <select id="add-warmth">
+                            <option value="薄">薄</option>
+                            <option value="适中" selected>适中</option>
+                            <option value="厚">厚</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>季节</label>
+                        <select id="add-season">
+                            <option value="春夏">春夏</option>
+                            <option value="秋冬">秋冬</option>
+                            <option value="四季">四季</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>图片</label>
+                        <div class="upload-area" id="upload-area">
+                            <input type="file" id="add-image" accept="image/*" hidden>
+                            <div class="upload-placeholder" id="upload-placeholder">
+                                <div class="upload-icon">+</div>
+                                <div class="upload-text">点击上传照片</div>
+                                <div class="upload-hint">背景越简洁越准确</div>
+                            </div>
+                            <img class="upload-preview" id="upload-preview" style="display:none">
+                        </div>
+                    </div>
+                    <button class="btn-submit" id="btn-submit-add">确认添加</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

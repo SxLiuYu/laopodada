@@ -1,0 +1,27 @@
+[Unit]
+Description=Electronic Wardrobe Web App (Flask + AI)
+After=network.target
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/wardrobe
+Environment="PATH=/opt/wardrobe_env/bin:/usr/local/bin:/usr/bin:/bin"
+Environment="HOST=0.0.0.0"
+Environment="PORT=5050"
+Environment="WARDROBE_MODELS_DIR=/opt/llm_models"
+# --- 混合 AI 模式 (Mac mini 提供推理, 云端只跑 Flask) ---
+# 留空则退化为本地加载 / 纯规则模式
+# Mac mini 端跑 install_launchd.sh 后填入它的 Tailscale 100.x.x.x IP
+# Environment="LLM_REMOTE_URL=http://100.x.x.x:8001"
+# Environment="FASHION_CLIP_REMOTE_URL=http://100.x.x.x:8002"
+ExecStart=/opt/wardrobe_env/bin/python /opt/wardrobe/app.py
+Restart=on-failure
+RestartSec=5
+StandardOutput=append:/opt/wardrobe/logs/wardrobe.out.log
+StandardError=append:/opt/wardrobe/logs/wardrobe.err.log
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,13 @@
+flask>=3.0
+Pillow
+numpy
+requests
+
+# LLM 推理 (Apple Silicon)
+mlx-lm>=0.20
+
+# 视觉推理 (CLIP)
+torch>=2.1
+transformers>=4.40
+accelerate
+safetensors

@@ -1,0 +1,19 @@
+flask>=3.0
+requests>=2.31
+Pillow>=10.0
+numpy>=1.26
+python-dotenv>=1.0
+
+# 视觉模型 (Marqo-FashionCLIP / HuggingFace transformers + torch)
+transformers>=4.45
+torch>=2.1
+accelerate>=0.34
+safetensors>=0.4
+
+# LLM (Linux/Windows 用 transformers; Mac M1+ 可选 mlx-lm)
+# Mac: pip install mlx-lm
+# Linux/Windows: 上面 transformers 已够用
+
+# 可选：白底抠图预处理
+# rembg>=2.0
+# onnxruntime>=1.17
