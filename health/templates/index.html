@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>健康知识 - 偏口鱼博士风格</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; background: #f5f6fa; color: #333; }
+  .header { background: linear-gradient(135deg, #1a5c1a, #2e8b2e); color: white; padding: 30px 20px; text-align: center; }
+  .header h1 { font-size: 1.8em; margin-bottom: 8px; }
+  .header p { opacity: 0.85; font-size: 0.95em; }
+  .quote-banner { background: #1a5c1a; color: #ffd700; padding: 12px 20px; text-align: center; font-size: 0.9em; font-style: italic; }
+  .formula { background: #e8f5e9; border-left: 4px solid #2e8b2e; margin: 16px; padding: 14px; border-radius: 6px; font-size: 0.88em; line-height: 1.7; }
+  .formula strong { color: #1a5c1a; }
+  .search-box { margin: 16px; display: flex; gap: 8px; }
+  .search-box input { flex: 1; padding: 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 1em; }
+  .search-box button { padding: 12px 20px; background: #1a5c1a; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 1em; }
+  .search-box button:hover { background: #2e8b2e; }
+  .answer-box { margin: 16px; background: white; border-radius: 10px; padding: 18px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); display: none; }
+  .answer-box.show { display: block; }
+  .answer-label { font-size: 0.8em; color: #1a5c1a; font-weight: bold; margin-bottom: 8px; }
+  .answer-text { line-height: 1.8; font-size: 0.95em; white-space: pre-wrap; }
+  .sources { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 6px; }
+  .source-tag { background: #e8f5e9; color: #1a5c1a; padding: 4px 10px; border-radius: 20px; font-size: 0.8em; }
+  .tips-box { background: #fff8e1; border-left: 4px solid #ffc107; margin: 16px; padding: 14px; border-radius: 6px; font-size: 0.88em; }
+  .tips-box .tip-quote { color: #f57c00; font-style: italic; margin: 6px 0; }
+  .section-title { margin: 20px 16px 10px; font-size: 1.1em; font-weight: bold; color: #1a5c1a; }
+  .category-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 0 16px; }
+  .cat-card { background: white; border-radius: 10px; padding: 14px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); text-align: center; cursor: pointer; transition: transform 0.15s; }
+  .cat-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.12); }
+  .cat-card h3 { font-size: 1em; color: #1a5c1a; margin-bottom: 4px; }
+  .cat-card p { font-size: 0.8em; color: #888; }
+  .entry-list { margin: 0 16px; }
+  .entry-item { background: white; border-radius: 8px; padding: 14px; margin-bottom: 10px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); cursor: pointer; }
+  .entry-item .entry-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+  .entry-item .entry-title { font-size: 0.95em; font-weight: bold; }
+  .entry-item .entry-badge { font-size: 0.72em; padding: 2px 8px; border-radius: 12px; }
+  .badge-green { background: #c8e6c9; color: #1a5c1a; }
+  .badge-red { background: #ffcdd2; color: #c62828; }
+  .entry-item .entry-summary { font-size: 0.85em; color: #666; line-height: 1.5; }
+  .entry-item .entry-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
+  .entry-tag { background: #f0f0f0; color: #666; padding: 2px 8px; border-radius: 10px; font-size: 0.75em; }
+  .detail-panel { background: white; border-radius: 10px; margin: 16px; padding: 18px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); display: none; }
+  .detail-panel.show { display: block; }
+  .detail-panel h2 { font-size: 1.2em; color: #1a5c1a; margin-bottom: 10px; }
+  .detail-panel .detail-summary { background: #e8f5e9; padding: 12px; border-radius: 6px; font-size: 0.9em; color: #1a5c1a; margin-bottom: 12px; }
+  .detail-panel .detail-text { font-size: 0.9em; line-height: 1.8; color: #444; }
+  .back-btn { display: inline-block; padding: 8px 16px; background: #1a5c1a; color: white; border-radius: 6px; cursor: pointer; font-size: 0.85em; margin-bottom: 12px; }
+  .footer { text-align: center; padding: 20px; color: #aaa; font-size: 0.8em; }
+  .loading { text-align: center; padding: 20px; color: #888; }
+  @media (max-width: 480px) { .category-grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🥗 健康知识站</h1>
+  <p>基于偏口鱼博士循证医学科普 · 智商税终结者</p>
+</div>
+
+<div class="quote-banner" id="quoteBanner">
+  "{{ KEY_QUOTES[0] }}"
+</div>
+
+<div class="formula">
+  <strong>🥗 偏口鱼博士饮食公式：</strong><br>
+  {{ DIET_FORMULA }}
+</div>
+
+<div class="search-box">
+  <input type="text" id="queryInput" placeholder="比如：鱼油值不值得买？骨头汤能补钙吗？" onkeydown="if(event.key==='Enter')askQuestion()">
+  <button onclick="askQuestion()">问问博士</button>
+</div>
+
+<div class="answer-box" id="answerBox">
+  <div class="answer-label">🩺 偏口鱼博士观点：</div>
+  <div class="answer-text" id="answerText"></div>
+  <div class="sources" id="sourcesBox"></div>
+  <div class="tips-box" id="tipsBox" style="display:none">
+    <div class="answer-label">💡 博士金句</div>
+    <div class="tip-quote" id="tipQuote"></div>
+  </div>
+</div>
+
+<div class="section-title">📂 知识分类</div>
+<div class="category-grid" id="categoryGrid"></div>
+
+<div class="entry-list" id="entryList" style="display:none"></div>
+<div class="detail-panel" id="detailPanel"></div>
+
+<div class="footer">数据来源：偏口鱼博士直播整理 · 循证医学 · 仅供参考</div>
+
+<script>
+const cats = {{ cats | tojson }};
+const db = {{ db | tojson }};
+const quotes = {{ quotes | tojson }};
+
+let currentView = 'home';
+
+function showQuote() {
+  const q = quotes[Math.floor(Math.random() * quotes.length)];
+  document.getElementById('quoteBanner').textContent = '"' + q + '"';
+}
+showQuote();
+setInterval(showQuote, 8000);
+
+function renderCategories() {
+  const grid = document.getElementById('categoryGrid');
+  grid.innerHTML = '';
+  for (const [cat, count] of Object.entries(cats)) {
+    const div = document.createElement('div');
+    div.className = 'cat-card';
+    div.innerHTML = `<h3>${cat}</h3><p>${count} 条知识</p>`;
+    div.onclick = () => showCategory(cat);
+    grid.appendChild(div);
+  }
+}
+renderCategories();
+
+function showCategory(cat) {
+  currentView = 'category';
+  document.getElementById('entryList').style.display = 'block';
+  document.getElementById('entryList').innerHTML = '';
+  document.getElementById('detailPanel').classList.remove('show');
+  document.getElementById('answerBox').classList.remove('show');
+
+  const items = db.filter(k => k.category === cat);
+  const title = document.createElement('div');
+  title.className = 'section-title';
+  title.textContent = '📂 ' + cat;
+  document.getElementById('entryList').appendChild(title);
+
+  items.forEach(item => {
+    const div = document.createElement('div');
+    div.className = 'entry-item';
+    const badge = item.recommend === '推荐' || item.recommend === '重要'
+      ? '<span class="entry-badge badge-green">✅ ' + item.recommend + '</span>'
+      : '<span class="entry-badge badge-red">❌ ' + item.recommend + '</span>';
+    div.innerHTML = `
+      <div class="entry-header">
+        <span class="entry-title">${item.title}</span>${badge}
+      </div>
+      <div class="entry-summary">${item.summary}</div>
+      <div class="entry-tags">${item.tags.map(t => `<span class="entry-tag">#${t}</span>`).join('')}</div>
+    `;
+    div.onclick = () => showDetail(item);
+    document.getElementById('entryList').appendChild(div);
+  });
+}
+
+function showDetail(item) {
+  document.getElementById('detailPanel').innerHTML = `
+    <span class="back-btn" onclick="closeDetail()">← 返回</span>
+    <h2>${item.title}</h2>
+    <div class="detail-summary">${item.summary}</div>
+    <div class="detail-text">${item.details}</div>
+    <div class="entry-tags" style="margin-top:14px">${item.tags.map(t => `<span class="entry-tag">#${t}</span>`).join('')}</div>
+  `;
+  document.getElementById('detailPanel').classList.add('show');
+  document.getElementById('detailPanel').scrollIntoView({behavior:'smooth'});
+}
+
+function closeDetail() {
+  document.getElementById('detailPanel').classList.remove('show');
+}
+
+async function askQuestion() {
+  const q = document.getElementById('queryInput').value.trim();
+  if (!q) return;
+  document.getElementById('answerBox').classList.add('show');
+  document.getElementById('answerText').textContent = '思考中...';
+  document.getElementById('sourcesBox').innerHTML = '';
+  document.getElementById('tipsBox').style.display = 'none';
+
+  try {
+    const resp = await fetch('/api/ask', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({query: q})
+    });
+    const data = await resp.json();
+    document.getElementById('answerText').textContent = data.answer;
+    if (data.sources && data.sources.length) {
+      document.getElementById('sourcesBox').innerHTML = data.sources.map(s =>
+        `<span class="source-tag">📄 ${s.title}</span>`
+      ).join('');
+    }
+    if (data.tips && data.tips.length) {
+      document.getElementById('tipQuote').textContent = data.tips[0];
+      document.getElementById('tipsBox').style.display = 'block';
+    }
+  } catch(e) {
+    document.getElementById('answerText').textContent = '请求失败，请稍后重试。';
+  }
+}
+</script>
+</body>
+</html>
