@@ -29,7 +29,11 @@ jobs:
           pip install -r requirements.txt
 
       - name: Import smoke check
-        run: python -c "import app; print('import ok, routes:', [r.rule for r in app.app.url_map.iter_rules()])"
+        env:
+          LAOPODADA_DATA_DIR: /tmp/laopodada-smoke
+        run: |
+          mkdir -p /tmp/laopodada-smoke/db /tmp/laopodada-smoke/images/{original,list,thumb}
+          python -c "import app, os; print('import ok, routes:', sorted([r.rule for r in app.app.url_map.iter_rules()]))"
 
       - name: Start gunicorn in background
         run: |
@@ -97,7 +101,7 @@ jobs:
       - uses: actions/checkout@v4
 
       # swiftc is available on Ubuntu's swift toolchain
-      - uses: swift-actions/setup-swift@v2
+      - uses: swatinem/setup-swift@v1
         with:
           swift-version: "5.9"
 

@@ -11,7 +11,7 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any
 
-from flask import Flask, abort, g, jsonify, request, send_from_directory
+from flask import Flask, abort, g, jsonify, request
 from PIL import Image
 
 # Pillow 9.x had `Image.LANCZOS` as a module-level alias; Pillow 10+ moved it to
@@ -136,7 +136,7 @@ def _save_three_sizes(raw: bytes) -> dict[str, Any]:
         img = img.convert("RGB")
 
     item_id = uuid.uuid4().hex[:16]
-    base = f"http://123.57.107.21:8088/images"  # public base via Nginx
+    base = "http://123.57.107.21:8088/images"  # public base via Nginx
 
     # 1) original — resize only if larger than ORIG_MAX on long edge
     w, h = img.size
@@ -327,12 +327,15 @@ def list_recipes():
 
     where, params = [], []
     if category:
-        where.append("category=?"); params.append(category)
+        where.append("category=?")
+        params.append(category)
     if difficulty:
-        where.append("difficulty=?"); params.append(difficulty)
+        where.append("difficulty=?")
+        params.append(difficulty)
     if tag:
         # comma-joined list — match if tag appears in CSV
-        where.append("','||tags||',' LIKE ?"); params.append(f"%,{tag},%")
+        where.append("','||tags||',' LIKE ?")
+        params.append(f"%,{tag},%")
     where_sql = ("WHERE " + " AND ".join(where)) if where else ""
 
     db = get_db()
