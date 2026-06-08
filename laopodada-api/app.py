@@ -11,7 +11,7 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any
 
-from flask import Flask, abort, g, jsonify, request
+from flask import Flask, abort, g, jsonify, request, send_from_directory
 from PIL import Image
 
 # Pillow 9.x had `Image.LANCZOS` as a module-level alias; Pillow 10+ moved it to
@@ -136,7 +136,11 @@ def _save_three_sizes(raw: bytes) -> dict[str, Any]:
         img = img.convert("RGB")
 
     item_id = uuid.uuid4().hex[:16]
-    base = "http://123.57.107.21:8088/images"  # public base via Nginx
+    # Public URL prefix for serving the saved image.
+    # Production: LAOPODADA_PUBLIC_BASE=https://wardrobe.example.com/images
+    #   (Nginx in front of gunicorn serves /images/* from the data dir)
+    # CI / local default: /images (Flask serve_image route serves files)
+    base = os.environ.get("LAOPODADA_PUBLIC_BASE", "/images").rstrip("/")
 
     # 1) original — resize only if larger than ORIG_MAX on long edge
     w, h = img.size
@@ -226,6 +230,21 @@ def _row_to_recipe(row: sqlite3.Row) -> dict:
 @app.get("/health")
 def health():
     return jsonify(ok=True, service="laopodada-api", time=int(time.time()))
+
+
+# ---------- Image serving (fallback when no Nginx in front) ----------
+# In production on Server 2, Nginx serves /images/* directly from the
+# shared /data volume. For local dev and CI, expose the same files via
+# Flask so the smoke test can fetch them.
+@app.get("/images/<path:relpath>")
+def serve_image(relpath: str):
+    # relpath looks like "list/cf31...jpg" or "thumb/..." or "original/..."
+    full = os.path.normpath(os.path.join(IMG_DIR, relpath))
+    if not full.startswith(os.path.normpath(IMG_DIR)):
+        abort(404)
+    if not os.path.isfile(full):
+        abort(404)
+    return send_from_directory(os.path.dirname(full), os.path.basename(full))
 
 
 # ---------- Wardrobe ----------
