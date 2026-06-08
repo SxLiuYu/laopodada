@@ -26,6 +26,11 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: 'platform-tools | platforms;android-32 | build-tools;32.0.0'
+
       - name: Setup Gradle 7.6.4
         uses: gradle/actions/setup-gradle@v3
         with:
@@ -47,8 +52,11 @@ jobs:
 
       - name: Build Android APK
         run: |
-          export ANDROID_SDK_ROOT=/usr/local/lib/android/sdk
+          export ANDROID_SDK_ROOT=$HOME/.android/sdk
+          export ANDROID_HOME=$HOME/.android/sdk
           export PATH=$PATH:$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools
+          # Accept SDK licenses so sdkmanager can install packages
+          yes | sdkmanager --licenses >/dev/null 2>&1 || true
           cd cordova/platforms/android
           # cordova-android@11.0.0 doesn't ship gradlew; generate it from gradle.properties template
           gradle wrapper --gradle-version 7.6.4 --distribution-type bin
