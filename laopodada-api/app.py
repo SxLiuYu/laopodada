@@ -139,15 +139,15 @@ def _save_three_sizes(raw: bytes) -> dict[str, Any]:
     # Public URL prefix for serving the saved image.
     # Resolution order:
     #   1. LAOPODADA_PUBLIC_BASE env var (explicit override)
-    #   2. request.host_url (auto-detect scheme+host+port from the request)
-    #   3. /images (path-only, for Nginx-prefixed deployments that strip host)
-    # This way the URLs are always reachable from the same network the
-    # client is using — no hardcoded production host leaking into CI.
+    #   2. request.url_root + "images" — auto-detect scheme+host+port from
+    #      the incoming request and append the images path. Works in CI
+    #      (gunicorn at 127.0.0.1:8097) and in production (Nginx front of
+    #      gunicorn, as long as Nginx preserves the Host header).
     if "LAOPODADA_PUBLIC_BASE" in os.environ:
         base = os.environ["LAOPODADA_PUBLIC_BASE"].rstrip("/")
     else:
         try:
-            base = request.host_url.rstrip("/")
+            base = request.url_root.rstrip("/") + "/images"
         except RuntimeError:
             base = "/images"
 
