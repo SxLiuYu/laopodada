@@ -29,9 +29,8 @@ jobs:
         run: npm install
         working-directory: ./cordova
 
-      - name: Add iOS platform
-        run: npx cordova platform add ios@6.3.0
-        working-directory: ./cordova
+      # iOS platform files are already in the repo (committed in this same workflow)
+      # No need to re-add — xcodebuild uses the checked-out files directly
 
       - name: Pod install (CocoaPods)
         run: |
