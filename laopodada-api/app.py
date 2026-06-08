@@ -4,9 +4,11 @@ Modules: wardrobe (items), recipe (recipes).
 Run via gunicorn -c gunicorn.conf.py app:app
 """
 import io
+import json
 import os
 import sqlite3
 import time
+import urllib.request
 import uuid
 from datetime import datetime, timezone
 from typing import Any
@@ -37,6 +39,40 @@ ALLOWED_IMAGE_TYPES = {"JPEG", "PNG", "WEBP"}
 WARDROBE_CATEGORIES = {"top", "bottom", "dress", "outerwear", "shoes", "bag", "accessory"}
 RECIPE_CATEGORIES = {"breakfast", "lunch", "dinner", "snack", "dessert", "drink"}
 RECIPE_DIFFICULTY = {"easy", "medium", "hard"}
+
+# Outfit recommendation
+OCCASIONS = {"casual", "work", "date", "sport", "party", "home"}
+SEASONS = {"spring", "summer", "fall", "winter"}
+COLOR_HARMONY = {
+    # Simple color-wheel rules: each base color -> list of colors that go with it.
+    # "neutral" colors go with anything.
+    "neutral":   ["black", "white", "gray", "beige", "navy", "blue", "red", "green", "yellow", "pink", "brown", "purple", "orange"],
+    "black":     ["black", "white", "gray", "red", "pink", "blue", "yellow", "beige"],
+    "white":     ["black", "white", "blue", "red", "pink", "green", "yellow", "gray", "navy", "beige"],
+    "gray":      ["black", "white", "gray", "red", "pink", "blue", "yellow", "purple", "navy"],
+    "blue":      ["white", "blue", "gray", "beige", "navy", "black", "yellow"],
+    "navy":      ["white", "beige", "gray", "blue", "yellow", "red", "black"],
+    "red":       ["black", "white", "gray", "beige", "navy", "blue"],
+    "pink":      ["white", "gray", "beige", "navy", "blue", "black"],
+    "green":     ["white", "beige", "gray", "navy", "black", "yellow"],
+    "yellow":    ["black", "white", "gray", "navy", "blue", "purple"],
+    "beige":     ["white", "beige", "black", "navy", "brown", "blue", "green"],
+    "brown":     ["beige", "white", "black", "blue", "green", "yellow"],
+    "purple":    ["white", "gray", "beige", "black", "yellow"],
+    "orange":    ["white", "black", "gray", "navy", "beige", "blue"],
+}
+# Category mapping: which slots do we try to fill in an outfit?
+OCCASION_SLOTS = {
+    # default slot list per occasion; not all items are required
+    "casual": ["top", "bottom", "shoes", "accessory"],
+    "work":   ["top", "bottom", "outerwear", "shoes", "bag"],
+    "date":   ["dress", "outerwear", "shoes", "accessory"],
+    "sport":  ["top", "bottom", "shoes"],
+    "party":  ["dress", "outerwear", "shoes", "accessory", "bag"],
+    "home":   ["top", "bottom"],
+}
+# Category that can substitute for "top+bottom" combo (e.g. one-piece dress)
+DRESS_ONLY = "dress"
 
 # ---------- Flask ----------
 app = Flask(__name__)
@@ -103,6 +139,28 @@ def init_db() -> None:
         CREATE INDEX IF NOT EXISTS idx_recipe_category   ON recipes(category);
         CREATE INDEX IF NOT EXISTS idx_recipe_difficulty ON recipes(difficulty);
         CREATE INDEX IF NOT EXISTS idx_recipe_created    ON recipes(created_at DESC);
+
+        CREATE TABLE IF NOT EXISTS outfits (
+            id           TEXT PRIMARY KEY,
+            occasion     TEXT NOT NULL,
+            season       TEXT,
+            item_ids     TEXT NOT NULL,           -- JSON array of wardrobe_items.id
+            reason       TEXT,                    -- one-line human explanation (rule + color)
+            llm_note     TEXT,                    -- optional LLM-generated tip
+            style_score  REAL,                    -- 0..1 internal score (rule + color harmony)
+            created_at   INTEGER NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS idx_outfits_occasion ON outfits(occasion);
+        CREATE INDEX IF NOT EXISTS idx_outfits_created  ON outfits(created_at DESC);
+
+        CREATE TABLE IF NOT EXISTS outfit_feedback (
+            id           INTEGER PRIMARY KEY AUTOINCREMENT,
+            outfit_id    TEXT NOT NULL,
+            rating       INTEGER NOT NULL,        -- +1 / -1
+            comment      TEXT,
+            created_at   INTEGER NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS idx_feedback_outfit ON outfit_feedback(outfit_id);
     """)
     db.commit()
     db.close()
@@ -463,6 +521,230 @@ def delete_recipe(recipe_id: str):
                 pass
     db.execute("DELETE FROM recipes WHERE id=?", (recipe_id,))
     return jsonify(id=recipe_id, ok=True)
+
+
+# ---------- Outfit recommendation ----------
+def _norm_color(c: str | None) -> str:
+    """Normalize a free-text color into one of the COLOR_HARMONY keys.
+    Falls back to 'neutral' so it harmonizes with anything."""
+    if not c:
+        return "neutral"
+    s = c.strip().lower()
+    # Direct hit
+    if s in COLOR_HARMONY:
+        return s
+    # Substring mapping for common phrasings
+    aliases = {
+        "navy blue": "navy", "denim": "blue", "light blue": "blue", "sky blue": "blue",
+        "dark blue": "navy", "beige/tan": "beige", "tan": "beige", "khaki": "beige",
+        "grey": "gray", "burgundy": "red", "maroon": "red", "wine": "red",
+        "off-white": "white", "ivory": "white", "cream": "white",
+        "olive": "green", "teal": "blue", "turquoise": "blue",
+    }
+    for k, v in aliases.items():
+        if k in s:
+            return v
+    return "neutral"
+
+
+def _harmony_score(colors: list[str]) -> float:
+    """0..1 score: starts at 1.0, deduct for each clash. Neutral = always OK."""
+    if not colors:
+        return 0.0
+    score = 1.0
+    norm = [_norm_color(c) for c in colors]
+    # Anchor on first non-neutral color
+    anchor = next((c for c in norm if c != "neutral"), None)
+    if not anchor:
+        return score
+    ok_set = set(COLOR_HARMONY.get(anchor, [])) | {"neutral"}
+    for c in norm:
+        if c not in ok_set and c != anchor:
+            score -= 0.25
+    return max(0.0, min(1.0, score))
+
+
+def _season_filter(category: str, season: str | None) -> bool:
+    """A few practical rules; can be loosened later."""
+    if not season:
+        return True
+    s = season.lower()
+    # coats/outerwear are useful in cool seasons, less so in hot
+    if category == "outerwear" and s in ("summer",):
+        return False
+    return True
+
+
+def _rule_pick(items_by_cat: dict[str, list[dict]], slots: list[str]) -> tuple[list[dict], float, str]:
+    """Greedy: pick one item per slot, preferring most recently added, with color harmony."""
+    chosen: list[dict] = []
+    chosen_colors: list[str] = []
+    missing: list[str] = []
+
+    for slot in slots:
+        cands = items_by_cat.get(slot, [])
+        if not cands:
+            missing.append(slot)
+            continue
+        # Score each candidate: prefer items whose color harmonizes with what's chosen so far
+        best = None
+        best_score = -1.0
+        for it in cands:
+            c = _norm_color(it.get("color"))
+            base = 0.5
+            if not chosen_colors:
+                base = 0.7
+            elif c == "neutral":
+                base = 0.9
+            elif c in COLOR_HARMONY.get(chosen_colors[0], []) or chosen_colors[0] in COLOR_HARMONY.get(c, []):
+                base = 0.95
+            else:
+                base = 0.4  # clash penalty
+            if base > best_score:
+                best_score = base
+                best = it
+        if best is not None:
+            chosen.append(best)
+            chosen_colors.append(_norm_color(best.get("color")))
+
+    # If occasion expected a dress and we got a top+bottom, that's fine; if we got nothing, return empty
+    score = _harmony_score(chosen_colors) if chosen_colors else 0.0
+    reason_bits = []
+    if missing:
+        reason_bits.append(f"缺少: {','.join(missing)}")
+    if chosen_colors:
+        anchor = next((c for c in chosen_colors if c != "neutral"), chosen_colors[0])
+        reason_bits.append(f"主色 {anchor} + 协调配色")
+    reason = " · ".join(reason_bits) if reason_bits else "无衣橱可推荐"
+    return chosen, score, reason
+
+
+def _llm_note(occasion: str, season: str | None, items: list[dict]) -> str | None:
+    """Optional LLM styling tip. Only called if LAOPODADA_LLM_API_KEY is set.
+    Off by default — safe fallback to rule-only output."""
+    api_key = os.environ.get("LAOPODADA_LLM_API_KEY")
+    if not api_key:
+        return None
+    base = os.environ.get("LAOPODADA_LLM_BASE", "https://api.minimax.com/v1")
+    model = os.environ.get("LAOPODADA_LLM_MODEL", "MiniMax-Text-01")
+    item_lines = ", ".join(
+        f"{it.get('category')}/{it.get('color') or '?'}/{it.get('title') or it.get('id')}"
+        for it in items
+    )
+    prompt = (
+        f"场合:{occasion}, 季节:{season or '未知'}, "
+        f"已选单品:{item_lines}。给一条20字内的中文穿搭建议。"
+    )
+    try:
+        req = urllib.request.Request(
+            f"{base.rstrip('/')}/chat/completions",
+            method="POST",
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json",
+            },
+            data=json.dumps({
+                "model": model,
+                "messages": [{"role": "user", "content": prompt}],
+                "max_tokens": 80,
+                "temperature": 0.7,
+            }).encode("utf-8"),
+        )
+        with urllib.request.urlopen(req, timeout=10) as r:
+            data = json.loads(r.read())
+        return data["choices"][0]["message"]["content"].strip()
+    except Exception as e:
+        return f"(LLM 暂不可用: {e})"
+
+
+@app.post("/api/v1/outfits/recommend")
+def recommend_outfit():
+    body = request.get_json(silent=True) or {}
+    occasion = (body.get("occasion") or "").strip().lower()
+    season = (body.get("season") or "").strip().lower() or None
+    if occasion not in OCCASIONS:
+        abort(400, description=f"occasion 必须是 {sorted(OCCASIONS)} 之一")
+    if season and season not in SEASONS:
+        abort(400, description=f"season 必须是 {sorted(SEASONS)} 之一")
+
+    db = get_db()
+    # Pull all items, group by category
+    rows = db.execute("SELECT * FROM wardrobe_items").fetchall()
+    items = [_row_to_wardrobe(r) for r in rows]
+    items_by_cat: dict[str, list[dict]] = {c: [] for c in WARDROBE_CATEGORIES}
+    for it in items:
+        if it["category"] in items_by_cat and _season_filter(it["category"], season):
+            items_by_cat[it["category"]].append(it)
+
+    slots = OCCASION_SLOTS.get(occasion, ["top", "bottom"])
+    chosen, score, reason = _rule_pick(items_by_cat, slots)
+
+    # Persist the recommendation
+    outfit_id = uuid.uuid4().hex[:16]
+    now = int(time.time())
+    llm = _llm_note(occasion, season, chosen) if chosen else None
+    db.execute(
+        "INSERT INTO outfits (id, occasion, season, item_ids, reason, llm_note, style_score, created_at) "
+        "VALUES (?,?,?,?,?,?,?,?)",
+        (outfit_id, occasion, season,
+         json.dumps([it["id"] for it in chosen]),
+         reason, llm, score, now),
+    )
+
+    return jsonify(
+        id=outfit_id,
+        occasion=occasion,
+        season=season,
+        items=chosen,
+        reason=reason,
+        llm_note=llm,
+        style_score=score,
+        created_at=now,
+    )
+
+
+@app.post("/api/v1/outfits/<outfit_id>/feedback")
+def outfit_feedback(outfit_id: str):
+    body = request.get_json(silent=True) or {}
+    rating = body.get("rating")
+    if rating not in (1, -1):
+        abort(400, description="rating 必须是 +1 或 -1")
+    db = get_db()
+    row = db.execute("SELECT id FROM outfits WHERE id=?", (outfit_id,)).fetchone()
+    if not row:
+        abort(404, description="not found")
+    db.execute(
+        "INSERT INTO outfit_feedback (outfit_id, rating, comment, created_at) VALUES (?,?,?,?)",
+        (outfit_id, int(rating), (body.get("comment") or "").strip() or None, int(time.time())),
+    )
+    return jsonify(ok=True, outfit_id=outfit_id, rating=rating)
+
+
+@app.get("/api/v1/outfits/recent")
+def recent_outfits():
+    limit = max(1, min(int(request.args.get("limit", 20)), 100))
+    db = get_db()
+    rows = db.execute("SELECT * FROM outfits ORDER BY created_at DESC LIMIT ?", (limit,)).fetchall()
+    out = []
+    for r in rows:
+        try:
+            ids = json.loads(r["item_ids"])
+        except Exception:
+            ids = []
+        items = db.execute(
+            f"SELECT * FROM wardrobe_items WHERE id IN ({','.join('?'*len(ids))})", ids
+        ).fetchall() if ids else []
+        out.append({
+            "id": r["id"],
+            "occasion": r["occasion"],
+            "season": r["season"],
+            "items": [_row_to_wardrobe(x) for x in items],
+            "reason": r["reason"],
+            "llm_note": r["llm_note"],
+            "style_score": r["style_score"],
+            "created_at": r["created_at"],
+        })
+    return jsonify(outfits=out)
 
 
 # ---------- Errors ----------
