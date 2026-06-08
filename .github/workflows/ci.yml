@@ -11,6 +11,8 @@ jobs:
   api:
     name: laopodada-api
     runs-on: ubuntu-latest
+    env:
+      LAOPODADA_DATA_DIR: /tmp/laopodada-smoke
     defaults:
       run:
         working-directory: laopodada-api
@@ -76,9 +78,11 @@ jobs:
             ls -la /tmp/ | grep -E "gunicorn|ci.jpg"
             echo "==== DIAG: LAOPODADA_DATA_DIR ===="
             echo "DATA_DIR=$LAOPODADA_DATA_DIR"
-            ls -la "$LAOPODADA_DATA_DIR" 2>/dev/null
+            ls -laR "$LAOPODADA_DATA_DIR" 2>/dev/null | head -50
+            echo "==== DIAG: app routes ===="
+            python -c "from app import app; [print(r.rule, r.methods) for r in app.url_map.iter_rules() if 'api' in r.rule]"
           }
-          trap 'rc=$?; echo "==== STEP FAILED at line, rc=$rc ===="; dump_diag; exit $rc' ERR
+          trap 'rc=$?; echo "==== STEP FAILED, rc=$rc ===="; dump_diag; mkdir -p diag && dump_diag > diag/crud-fail.log 2>&1; exit $rc' ERR
 
           # Create a tiny test image
           python -c "
