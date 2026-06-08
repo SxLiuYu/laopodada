@@ -52,11 +52,9 @@ jobs:
 
       - name: Build Android APK
         run: |
-          export ANDROID_SDK_ROOT=$HOME/.android/sdk
-          export ANDROID_HOME=$HOME/.android/sdk
+          export ANDROID_SDK_ROOT=/usr/local/lib/android/sdk
+          export ANDROID_HOME=/usr/local/lib/android/sdk
           export PATH=$PATH:$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools
-          # Accept SDK licenses so sdkmanager can install packages
-          yes | sdkmanager --licenses >/dev/null 2>&1 || true
           cd cordova/platforms/android
           # cordova-android@11.0.0 doesn't ship gradlew; generate it from gradle.properties template
           gradle wrapper --gradle-version 7.6.4 --distribution-type bin
