@@ -46,10 +46,21 @@ jobs:
             fi
             sleep 1
           done
+          echo "--- gunicorn.out (post-start) ---"
+          cat /tmp/gunicorn.out 2>/dev/null || echo "(empty)"
+          echo "--- listening sockets ---"
+          (ss -tlnp 2>/dev/null || netstat -tlnp 2>/dev/null) | grep 8097 || echo "(nothing on 8097)"
+          echo "--- ps for gunicorn ---"
+          ps -ef | grep -E "gunicorn" | grep -v grep || echo "(no gunicorn process)"
 
       - name: Health check
         run: |
-          curl -fsS http://127.0.0.1:8097/health
+          echo "--- gunicorn.out (pre-healthcheck) ---"
+          cat /tmp/gunicorn.out 2>/dev/null || echo "(empty)"
+          echo "--- listening sockets ---"
+          (ss -tlnp 2>/dev/null || netstat -tlnp 2>/dev/null) | grep 8097 || echo "(nothing on 8097)"
+          echo "--- curl /health ---"
+          curl -v http://127.0.0.1:8097/health 2>&1 | tail -30
           echo
 
       - name: End-to-end CRUD smoke test
