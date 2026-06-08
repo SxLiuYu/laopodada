@@ -137,10 +137,19 @@ def _save_three_sizes(raw: bytes) -> dict[str, Any]:
 
     item_id = uuid.uuid4().hex[:16]
     # Public URL prefix for serving the saved image.
-    # Production: LAOPODADA_PUBLIC_BASE=https://wardrobe.example.com/images
-    #   (Nginx in front of gunicorn serves /images/* from the data dir)
-    # CI / local default: /images (Flask serve_image route serves files)
-    base = os.environ.get("LAOPODADA_PUBLIC_BASE", "/images").rstrip("/")
+    # Resolution order:
+    #   1. LAOPODADA_PUBLIC_BASE env var (explicit override)
+    #   2. request.host_url (auto-detect scheme+host+port from the request)
+    #   3. /images (path-only, for Nginx-prefixed deployments that strip host)
+    # This way the URLs are always reachable from the same network the
+    # client is using — no hardcoded production host leaking into CI.
+    if "LAOPODADA_PUBLIC_BASE" in os.environ:
+        base = os.environ["LAOPODADA_PUBLIC_BASE"].rstrip("/")
+    else:
+        try:
+            base = request.host_url.rstrip("/")
+        except RuntimeError:
+            base = "/images"
 
     # 1) original — resize only if larger than ORIG_MAX on long edge
     w, h = img.size
