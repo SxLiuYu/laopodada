@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		068DB3AC470BF5BB99702E28 /* LaopodadaApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D3C0FFC86AA9CCE777D83DE /* LaopodadaApp.swift */; };
 		1AF1478570CE91572679651A /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC6CCD16C71C4E48974CAF47 /* AppState.swift */; };
+		1ED9A30D13C21BB0D3F21F3C /* RecipeDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A57132B503B9251289E3600E /* RecipeDetailView.swift */; };
 		4869EA8728EF08E00D96F87D /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 863922F1380EF9A828381EA7 /* RootView.swift */; };
 		55D0819709DEC0A4335FFC10 /* WardrobeItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA68809D8C487A23512BEFEB /* WardrobeItem.swift */; };
 		5854CA218E704D7F04A8D710 /* WardrobeAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD0D95AD7EFEB04217163818 /* WardrobeAPI.swift */; };
@@ -18,17 +19,26 @@
 		85923C3CEA79598BDAF69C8D /* PlaceholderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5790C2A326794F29942E4270 /* PlaceholderView.swift */; };
 		880A5817E9B949E88356BD3D /* WardrobeAddView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E730EA8E00830C5935BE96FA /* WardrobeAddView.swift */; };
 		8EAB111BEB43FA6D3E61272E /* ImageProcessor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A79154184824D991771BFB1A /* ImageProcessor.swift */; };
+		972CE67BF50C56D56AED0E3F /* RecipeAddView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30BFC42A5EE3D0465B689EAE /* RecipeAddView.swift */; };
+		CCAA3A5FD2174BD3DDFE11AA /* RecipeListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 864DBDC408709FFB6CA67CEE /* RecipeListView.swift */; };
 		DCC62502CFAAA729DE1E1AB5 /* WardrobeListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD16D3BB20D739C0B5BDD089 /* WardrobeListView.swift */; };
+		EA96574104C595E53216212F /* RecipeAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3CCF217BD935C6E3DEE48E90 /* RecipeAPI.swift */; };
+		F7231B04284F8CFE22AA75FB /* Recipe.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08E5DF41DAFAAD0BA25BEB02 /* Recipe.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		08E5DF41DAFAAD0BA25BEB02 /* Recipe.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Recipe.swift; sourceTree = "<group>"; };
 		0D3C0FFC86AA9CCE777D83DE /* LaopodadaApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaopodadaApp.swift; sourceTree = "<group>"; };
+		30BFC42A5EE3D0465B689EAE /* RecipeAddView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecipeAddView.swift; sourceTree = "<group>"; };
+		3CCF217BD935C6E3DEE48E90 /* RecipeAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecipeAPI.swift; sourceTree = "<group>"; };
 		42D613AB3874C4BDDB751A53 /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
 		5790C2A326794F29942E4270 /* PlaceholderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaceholderView.swift; sourceTree = "<group>"; };
 		636BA6025154E4D1734D0023 /* laopodada.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = laopodada.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		863922F1380EF9A828381EA7 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
+		864DBDC408709FFB6CA67CEE /* RecipeListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecipeListView.swift; sourceTree = "<group>"; };
 		8DC784A0A18A9A3977CCF07A /* WardrobeDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WardrobeDetailView.swift; sourceTree = "<group>"; };
 		98926A046087F8A4CC8D5561 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		A57132B503B9251289E3600E /* RecipeDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecipeDetailView.swift; sourceTree = "<group>"; };
 		A79154184824D991771BFB1A /* ImageProcessor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageProcessor.swift; sourceTree = "<group>"; };
 		BC6CCD16C71C4E48974CAF47 /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
 		BD0D95AD7EFEB04217163818 /* WardrobeAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WardrobeAPI.swift; sourceTree = "<group>"; };
@@ -72,6 +82,7 @@
 		3F3A7FF5DC37EA85536A34B2 /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				08E5DF41DAFAAD0BA25BEB02 /* Recipe.swift */,
 				FA68809D8C487A23512BEFEB /* WardrobeItem.swift */,
 			);
 			path = Models;
@@ -91,11 +102,22 @@
 				3B054AC5814D45019B76AA66 /* App */,
 				3F3A7FF5DC37EA85536A34B2 /* Models */,
 				840CD12EA0F4F38FB4628062 /* Networking */,
+				78652BBF2CFBE397EA4619B7 /* Recipe */,
 				023CAA58BD14E36CCB95F323 /* Shared */,
 				C94AE85F145751161DDFB8BF /* Support */,
 				0A8FD41D7ACB25D0A1D853AD /* Wardrobe */,
 			);
 			path = Sources;
+			sourceTree = "<group>";
+		};
+		78652BBF2CFBE397EA4619B7 /* Recipe */ = {
+			isa = PBXGroup;
+			children = (
+				30BFC42A5EE3D0465B689EAE /* RecipeAddView.swift */,
+				A57132B503B9251289E3600E /* RecipeDetailView.swift */,
+				864DBDC408709FFB6CA67CEE /* RecipeListView.swift */,
+			);
+			path = Recipe;
 			sourceTree = "<group>";
 		};
 		79279F8A4095A72548A9B795 = {
@@ -110,6 +132,7 @@
 			isa = PBXGroup;
 			children = (
 				42D613AB3874C4BDDB751A53 /* APIClient.swift */,
+				3CCF217BD935C6E3DEE48E90 /* RecipeAPI.swift */,
 				BD0D95AD7EFEB04217163818 /* WardrobeAPI.swift */,
 			);
 			path = Networking;
@@ -188,6 +211,11 @@
 				8EAB111BEB43FA6D3E61272E /* ImageProcessor.swift in Sources */,
 				068DB3AC470BF5BB99702E28 /* LaopodadaApp.swift in Sources */,
 				85923C3CEA79598BDAF69C8D /* PlaceholderView.swift in Sources */,
+				F7231B04284F8CFE22AA75FB /* Recipe.swift in Sources */,
+				EA96574104C595E53216212F /* RecipeAPI.swift in Sources */,
+				972CE67BF50C56D56AED0E3F /* RecipeAddView.swift in Sources */,
+				1ED9A30D13C21BB0D3F21F3C /* RecipeDetailView.swift in Sources */,
+				CCAA3A5FD2174BD3DDFE11AA /* RecipeListView.swift in Sources */,
 				4869EA8728EF08E00D96F87D /* RootView.swift in Sources */,
 				5854CA218E704D7F04A8D710 /* WardrobeAPI.swift in Sources */,
 				880A5817E9B949E88356BD3D /* WardrobeAddView.swift in Sources */,

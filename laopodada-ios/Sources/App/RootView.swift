@@ -16,7 +16,7 @@ struct RootView: View {
             .tag(Tab.wardrobe)
 
             NavigationStack {
-                PlaceholderView(title: "食谱", systemImage: "fork.knife", message: "下一阶段")
+                RecipeListView()
             }
             .tabItem { Label("食谱", systemImage: "fork.knife") }
             .tag(Tab.recipe)
