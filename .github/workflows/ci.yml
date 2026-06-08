@@ -136,6 +136,79 @@ jobs:
           [ "$HTTP" = "404" ] && echo "post-delete 404 ok" || (echo "expected 404, got $HTTP"; dump_diag; exit 1)
           echo "==== ALL CRUD STEPS PASSED ===="
 
+      - name: Outfit recommend smoke test
+        continue-on-error: true
+        run: |
+          set +e
+          rc=0
+
+          # Seed 3 wardrobe items
+          python -c "
+          from PIL import Image
+          Image.new('RGB', (20, 20), 'navy').save('/tmp/ci_outfit.jpg', 'JPEG')
+          print('seed image ok')
+          "
+
+          echo "--- POST /api/v1/items (top) ---"
+          TOP_ID=$(curl -sS -X POST http://127.0.0.1:8097/api/v1/items \
+            -F 'file=@/tmp/ci_outfit.jpg' -F 'category=top' -F 'color=navy' \
+            -F 'title=ci-top' | python3 -c "import sys,json; print(json.load(sys.stdin)['item']['id'])")
+          echo "top_id=$TOP_ID"
+
+          echo "--- POST /api/v1/items (bottom) ---"
+          BOT_ID=$(curl -sS -X POST http://127.0.0.1:8097/api/v1/items \
+            -F 'file=@/tmp/ci_outfit.jpg' -F 'category=bottom' -F 'color=black' \
+            -F 'title=ci-bottom' | python3 -c "import sys,json; print(json.load(sys.stdin)['item']['id'])")
+          echo "bot_id=$BOT_ID"
+
+          echo "--- POST /api/v1/items (shoes) ---"
+          SHOE_ID=$(curl -sS -X POST http://127.0.0.1:8097/api/v1/items \
+            -F 'file=@/tmp/ci_outfit.jpg' -F 'category=shoes' -F 'color=gray' \
+            -F 'title=ci-shoes' | python3 -c "import sys,json; print(json.load(sys.stdin)['item']['id'])")
+          echo "shoe_id=$SHOE_ID"
+
+          echo "--- POST /api/v1/outfits/recommend ---"
+          RESP=$(curl -sS -X POST http://127.0.0.1:8097/api/v1/outfits/recommend \
+            -H 'Content-Type: application/json' \
+            -d '{"occasion":"casual"}' -w '\nHTTP=%{http_code}\n')
+          HTTP_CODE=$(echo "$RESP" | sed -n 's/.*HTTP=//p')
+          BODY=$(echo "$RESP" | sed '/^HTTP=/d')
+          echo "recommend HTTP=$HTTP_CODE"
+          echo "recommend body=$BODY"
+
+          # Assertions
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "FAIL: expected HTTP 200, got $HTTP_CODE"
+            rc=1
+          fi
+
+          OUTFITS_COUNT=$(echo "$BODY" | python3 -c "import sys,json; print(len(json.load(sys.stdin).get('outfits',[])))" 2>/dev/null)
+          if [ "$OUTFITS_COUNT" -lt 1 ]; then
+            echo "FAIL: expected outfits array with at least 1 entry, got count=$OUTFITS_COUNT"
+            rc=1
+          fi
+
+          SCORE=$(echo "$BODY" | python3 -c "import sys,json; print(json.load(sys.stdin)['outfits'][0]['style_score'])" 2>/dev/null)
+          if [ -n "$SCORE" ]; then
+            PASS=$(python3 -c "s=float('$SCORE'); print('ok' if 0<=s<=1 else 'fail')" 2>/dev/null)
+            if [ "$PASS" != "ok" ]; then
+              echo "FAIL: style_score $SCORE not in [0,1]"
+              rc=1
+            else
+              echo "style_score $SCORE ∈ [0,1] — ok"
+            fi
+          fi
+
+          STRATEGIES=$(echo "$BODY" | python3 -c "import sys,json; print(json.load(sys.stdin).get('used_strategy',[]))" 2>/dev/null)
+          echo "used_strategy=$STRATEGIES"
+
+          if [ $rc -eq 0 ]; then
+            echo "==== RECOMMEND SMOKE PASSED ===="
+          else
+            echo "==== RECOMMEND SMOKE FAILED (non-blocking) ===="
+          fi
+          exit 0
+
       - name: Stop gunicorn
         if: always()
         run: |

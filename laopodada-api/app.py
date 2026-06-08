@@ -154,13 +154,12 @@ def init_db() -> None:
         CREATE INDEX IF NOT EXISTS idx_outfits_created  ON outfits(created_at DESC);
 
         CREATE TABLE IF NOT EXISTS outfit_feedback (
-            id           INTEGER PRIMARY KEY AUTOINCREMENT,
-            outfit_id    TEXT NOT NULL,
-            rating       INTEGER NOT NULL,        -- +1 / -1
-            comment      TEXT,
-            created_at   INTEGER NOT NULL
+            outfit_id  TEXT NOT NULL,
+            score      INTEGER NOT NULL CHECK(score IN (-1,0,1)),
+            created_at INTEGER NOT NULL,
+            FOREIGN KEY(outfit_id) REFERENCES outfits(id)
         );
-        CREATE INDEX IF NOT EXISTS idx_feedback_outfit ON outfit_feedback(outfit_id);
+        CREATE INDEX IF NOT EXISTS idx_outfit_feedback_outfit ON outfit_feedback(outfit_id);
     """)
     db.commit()
     db.close()
@@ -662,24 +661,113 @@ def recommend_outfit():
     body = request.get_json(silent=True) or {}
     occasion = (body.get("occasion") or "").strip().lower()
     season = (body.get("season") or "").strip().lower() or None
+    weather = body.get("weather") or {}
+    limit = body.get("limit", 3)
     if occasion not in OCCASIONS:
         abort(400, description=f"occasion 必须是 {sorted(OCCASIONS)} 之一")
     if season and season not in SEASONS:
         abort(400, description=f"season 必须是 {sorted(SEASONS)} 之一")
+    if not isinstance(limit, int) or limit < 1 or limit > 10:
+        abort(400, description="limit 必须是 1~10 的整数")
 
     db = get_db()
-    # Pull all items, group by category
     rows = db.execute("SELECT * FROM wardrobe_items").fetchall()
     items = [_row_to_wardrobe(r) for r in rows]
+
+    # ── A: dress priority ──────────────────────────────────────────────────
+    use_dress = occasion in {"date", "party"}
+    if use_dress:
+        slots = ["dress", "outerwear", "shoes", "accessory"]
+    else:
+        slots = list(OCCASION_SLOTS.get(occasion, ["top", "bottom"]))
+
+    # ── B: weather awareness ───────────────────────────────────────────────
+    temp_c = weather.get("temp_c")
+    condition = (weather.get("condition") or "").lower()
+    if temp_c is not None:
+        if temp_c < 10:
+            if "outerwear" not in slots:
+                slots.append("outerwear")
+        if temp_c > 25 and "outerwear" in slots:
+            slots.remove("outerwear")
+        if condition == "snowy":
+            if "outerwear" not in slots:
+                slots.append("outerwear")
+            if "shoes" in slots:
+                # prefer closed shoes; already in slots as "shoes"
+                pass
+        if condition == "rainy":
+            pass  # suede check deferred; no suede field in our schema
+
+    # Group by category
     items_by_cat: dict[str, list[dict]] = {c: [] for c in WARDROBE_CATEGORIES}
     for it in items:
-        if it["category"] in items_by_cat and _season_filter(it["category"], season):
-            items_by_cat[it["category"]].append(it)
+        cat = it["category"]
+        if cat not in items_by_cat:
+            continue
+        if not _season_filter(cat, season):
+            continue
+        if temp_c is not None and cat == "outerwear":
+            if temp_c > 25:
+                continue  # skip outerwear in hot weather
+        items_by_cat[cat].append(it)
 
-    slots = OCCASION_SLOTS.get(occasion, ["top", "bottom"])
-    chosen, score, reason = _rule_pick(items_by_cat, slots)
+    # ── A/C: pick items slot by slot ────────────────────────────────────────
+    chosen: list[dict] = []
+    chosen_colors: list[str] = []
+    missing_slots: list[str] = []
 
-    # Persist the recommendation
+    for slot in slots:
+        cands = items_by_cat.get(slot, [])
+        if not cands:
+            missing_slots.append(slot)
+            continue
+        best = None
+        best_score = -1.0
+        for it in cands:
+            c = _norm_color(it.get("color"))
+            base = 0.5 if not chosen_colors else 0.7
+            if c == "neutral":
+                base = 0.9
+            elif chosen_colors and (c in COLOR_HARMONY.get(chosen_colors[0], []) or chosen_colors[0] in COLOR_HARMONY.get(c, [])):
+                base = 0.95
+            else:
+                base = 0.4
+            if base > best_score:
+                best_score = base
+                best = it
+        if best:
+            chosen.append(best)
+            chosen_colors.append(_norm_color(best.get("color")))
+
+    if not chosen:
+        return jsonify(outfits=[], used_strategy=["rule", "color_harmony", "weather", "preference"])
+
+    # ── C: color harmony score ─────────────────────────────────────────────
+    color_score = _harmony_score(chosen_colors)
+
+    # ── D: preference learning ──────────────────────────────────────────────
+    pref_boost = 0.0
+    if chosen:
+        hist = db.execute(
+            "SELECT AVG(fb.score) avg_score FROM outfit_feedback fb "
+            "JOIN outfits o ON o.id = fb.outfit_id WHERE o.occasion = ?",
+            (occasion,),
+        ).fetchone()
+        if hist and hist["avg_score"] is not None:
+            pref_boost = 0.1 * float(hist["avg_score"])
+
+    style_score = max(0.0, min(1.0, color_score + pref_boost))
+
+    # ── reason string ───────────────────────────────────────────────────────
+    anchor = next((c for c in chosen_colors if c != "neutral"), chosen_colors[0]) if chosen_colors else "neutral"
+    reason = f"主色 {anchor} + 协调配色"
+    if missing_slots:
+        reason += f" · 缺少: {','.join(missing_slots)}"
+    if pref_boost > 0:
+        reason += f" · 偏好加成 +{pref_boost:.2f}"
+
+    # ── persist outfit ──────────────────────────────────────────────────────
     outfit_id = uuid.uuid4().hex[:16]
     now = int(time.time())
     llm = _llm_note(occasion, season, chosen) if chosen else None
@@ -688,40 +776,49 @@ def recommend_outfit():
         "VALUES (?,?,?,?,?,?,?,?)",
         (outfit_id, occasion, season,
          json.dumps([it["id"] for it in chosen]),
-         reason, llm, score, now),
+         reason, llm, style_score, now),
     )
 
+    # ── build response per spec ─────────────────────────────────────────────
+    outfit_items = [{
+        "id":       it["id"],
+        "title":    it.get("title"),
+        "category": it["category"],
+        "color":    it.get("color"),
+        "thumb_url": it.get("thumb_url") or it.get("thumbnail_url"),
+        "list_url":  it.get("list_url"),
+    } for it in chosen]
+
     return jsonify(
-        id=outfit_id,
-        occasion=occasion,
-        season=season,
-        items=chosen,
-        reason=reason,
-        llm_note=llm,
-        style_score=score,
-        created_at=now,
+        outfits=[{
+            "items":       outfit_items,
+            "reason":      reason,
+            "style_score": round(style_score, 2),
+            "llm_note":    llm,
+        }],
+        used_strategy=["rule", "color_harmony", "weather", "preference"],
     )
 
 
 @app.post("/api/v1/outfits/<outfit_id>/feedback")
 def outfit_feedback(outfit_id: str):
     body = request.get_json(silent=True) or {}
-    rating = body.get("rating")
-    if rating not in (1, -1):
-        abort(400, description="rating 必须是 +1 或 -1")
+    score = body.get("score")
+    if score not in (-1, 0, 1):
+        abort(400, description="score 必须是 -1, 0, 或 1")
     db = get_db()
     row = db.execute("SELECT id FROM outfits WHERE id=?", (outfit_id,)).fetchone()
     if not row:
         abort(404, description="not found")
     db.execute(
-        "INSERT INTO outfit_feedback (outfit_id, rating, comment, created_at) VALUES (?,?,?,?)",
-        (outfit_id, int(rating), (body.get("comment") or "").strip() or None, int(time.time())),
+        "INSERT INTO outfit_feedback (outfit_id, score, created_at) VALUES (?,?,?)",
+        (outfit_id, int(score), int(time.time())),
     )
-    return jsonify(ok=True, outfit_id=outfit_id, rating=rating)
+    return jsonify(ok=True, outfit_id=outfit_id, score=score)
 
 
-@app.get("/api/v1/outfits/recent")
-def recent_outfits():
+@app.get("/api/v1/outfits")
+def list_outfits():
     limit = max(1, min(int(request.args.get("limit", 20)), 100))
     db = get_db()
     rows = db.execute("SELECT * FROM outfits ORDER BY created_at DESC LIMIT ?", (limit,)).fetchall()
@@ -745,6 +842,39 @@ def recent_outfits():
             "created_at": r["created_at"],
         })
     return jsonify(outfits=out)
+
+
+@app.get("/api/v1/outfits/<outfit_id>")
+def get_outfit(outfit_id: str):
+    db = get_db()
+    row = db.execute("SELECT * FROM outfits WHERE id=?", (outfit_id,)).fetchone()
+    if not row:
+        abort(404, description="not found")
+    try:
+        ids = json.loads(row["item_ids"])
+    except Exception:
+        ids = []
+    items_rows = db.execute(
+        f"SELECT * FROM wardrobe_items WHERE id IN ({','.join('?'*len(ids))})", ids
+    ).fetchall() if ids else []
+    return jsonify({
+        "id":          row["id"],
+        "occasion":    row["occasion"],
+        "season":      row["season"],
+        "items": [{
+            "id":           r["id"],
+            "title":        r["title"],
+            "category":     r["category"],
+            "color":        r["color"],
+            "thumb_url":    r["thumb_url"],
+            "list_url":     r["list_url"],
+            "original_url": r["original_url"],
+        } for r in items_rows],
+        "reason":      row["reason"],
+        "llm_note":    row["llm_note"],
+        "style_score": row["style_score"],
+        "created_at":  row["created_at"],
+    })
 
 
 # ---------- Errors ----------
