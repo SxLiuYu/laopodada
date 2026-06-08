@@ -26,6 +26,11 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
+      - name: Setup Gradle 7.6.4
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: '7.6.4'
+
       - name: Install dependencies
         run: npm install
 
@@ -45,6 +50,8 @@ jobs:
           export ANDROID_SDK_ROOT=/usr/local/lib/android/sdk
           export PATH=$PATH:$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools
           cd cordova/platforms/android
+          # cordova-android@11.0.0 doesn't ship gradlew; generate it from gradle.properties template
+          gradle wrapper --gradle-version 7.6.4 --distribution-type bin
           chmod +x gradlew
           ./gradlew assembleRelease --no-daemon --stacktrace 2>&1
         continue-on-error: true
