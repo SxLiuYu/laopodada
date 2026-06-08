@@ -53,3 +53,9 @@ local.properties
 *.aab
 *.keystore
 *.jks
+
+# Cordova
+node_modules/
+package-lock.json
+cordova/platforms/
+cordova/build/

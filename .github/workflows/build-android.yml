@@ -1,0 +1,41 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'www/**'
+      - 'cordova/**'
+      - '.github/workflows/build-android.yml'
+
+jobs:
+  build-android:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Add Android platform
+        run: npx cordova platform add android
+        working-directory: ./cordova
+
+      - name: Build Android APK (release)
+        run: npx cordova build android --release
+        working-directory: ./cordova
+        continue-on-error: true
+
+      - name: Upload unsigned APK
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: apk-debug
+          path: cordova/platforms/android/app/build/outputs/apk/debug/*.apk
+          retention-days: 3

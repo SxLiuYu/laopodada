@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='utf-8'?>
+<widget id="com.laopodada.app" version="1.0.0" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/2011">
+  <name>老婆哒哒</name>
+  <description>衣橱管理 + 智能穿搭推荐</description>
+  <content src="index.html" />
+  <allow-intent href="http://*/*" />
+  <allow-navigation href="*://*/*" />
+  <access origin="*" />
+  <engine name="android" spec="12.0.0" />
+</widget>
