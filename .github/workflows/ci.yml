@@ -36,13 +36,21 @@ jobs:
 
       - name: Start gunicorn in background
         run: |
-          gunicorn -c gunicorn.conf.py app:app &
+          nohup python -m gunicorn -c gunicorn.conf.py app:app > /tmp/gunicorn.out 2>&1 &
           echo $! > /tmp/gunicorn.pid
-          sleep 2
+          # gunicorn 2 workers cold-start: wait for port with a retry loop
+          for i in 1 2 3 4 5 6 7 8 9 10; do
+            if curl -fsS http://127.0.0.1:8097/health >/dev/null 2>&1; then
+              echo "gunicorn ready after ${i}s"
+              break
+            fi
+            sleep 1
+          done
 
       - name: Health check
         run: |
           curl -fsS http://127.0.0.1:8097/health
+          echo
 
       - name: End-to-end CRUD smoke test
         run: |
