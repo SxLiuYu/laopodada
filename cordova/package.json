@@ -1,11 +1,12 @@
 {
   "devDependencies": {
-    "cordova-android": "^11.0.0"
+    "cordova-android": "^11.0.0",
+    "cordova-ios": "^6.3.0"
   },
-  "dependencies": {},
   "cordova": {
     "platforms": [
-      "android"
+      "android",
+      "ios"
     ]
   }
 }
