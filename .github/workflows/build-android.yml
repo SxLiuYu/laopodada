@@ -33,20 +33,26 @@ jobs:
         run: npm install
         working-directory: ./cordova
 
-      - name: Add Android platform
-        run: npx cordova platform add android
+      - name: Remove existing Android platform
+        run: rm -rf cordova/platforms/android
+
+      - name: Add Android platform (pin 11.0.0)
+        run: npx cordova platform add android@11.0.0
         working-directory: ./cordova
 
-      - name: Build Android APK (release)
+      - name: Build Android APK
         run: |
-          # Build APK but ignore gradle wrapper regeneration error
-          npx cordova build android --release 2>&1 || true
-        working-directory: ./cordova
+          export ANDROID_SDK_ROOT=/usr/local/lib/android/sdk
+          export PATH=$PATH:$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools
+          cd cordova/platforms/android
+          chmod +x gradlew
+          ./gradlew assembleRelease --no-daemon --stacktrace 2>&1
+        continue-on-error: true
 
       - name: Upload unsigned APK
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: apk-release
-          path: cordova/platforms/android/app/build/outputs/apk/
+          path: cordova/platforms/android/app/build/outputs/apk/release/
           retention-days: 3
