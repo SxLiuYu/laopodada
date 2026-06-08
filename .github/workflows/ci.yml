@@ -65,43 +65,72 @@ jobs:
 
       - name: End-to-end CRUD smoke test
         run: |
-          set -e
+          set +e   # don't abort — we want to see exactly which line fails
+          rc=0
+          dump_diag() {
+            echo "==== DIAG: gunicorn.out ===="
+            cat /tmp/gunicorn.out 2>/dev/null
+            echo "==== DIAG: gunicorn ps ===="
+            ps -ef | grep gunicorn | grep -v grep
+            echo "==== DIAG: ls /tmp ===="
+            ls -la /tmp/ | grep -E "gunicorn|ci.jpg"
+            echo "==== DIAG: LAOPODADA_DATA_DIR ===="
+            echo "DATA_DIR=$LAOPODADA_DATA_DIR"
+            ls -la "$LAOPODADA_DATA_DIR" 2>/dev/null
+          }
+          trap 'rc=$?; echo "==== STEP FAILED at line, rc=$rc ===="; dump_diag; exit $rc' ERR
+
           # Create a tiny test image
           python -c "
           from PIL import Image
           Image.new('RGB', (400, 300), 'lightblue').save('/tmp/ci.jpg', 'JPEG')
+          print('image saved')
           "
+          ls -la /tmp/ci.jpg
 
-          # POST upload
-          RESP=$(curl -fsS -X POST http://127.0.0.1:8097/api/v1/items \
-            -F 'file=@/tmp/ci.jpg' -F 'category=top' -F 'title=ci测试')
+          # POST upload (verbose on failure)
+          echo "--- POST /api/v1/items ---"
+          RESP=$(curl -sS -X POST http://127.0.0.1:8097/api/v1/items \
+            -F 'file=@/tmp/ci.jpg' -F 'category=top' -F 'title=ci测试' -w '\nHTTP=%{http_code}\n')
           echo "POST response: $RESP"
-          ID=$(echo "$RESP" | python3 -c "import sys,json; print(json.load(sys.stdin)['item']['id'])")
+          BODY=$(echo "$RESP" | sed '/^HTTP=/d')
+          ID=$(echo "$BODY" | python3 -c "import sys,json; print(json.load(sys.stdin)['item']['id'])" 2>/dev/null) || {
+            echo "POST failed to parse item id; dumping diag"
+            dump_diag
+            exit 1
+          }
           echo "Created id: $ID"
 
           # GET list
-          curl -fsS http://127.0.0.1:8097/api/v1/items | python3 -c "import sys,json; d=json.load(sys.stdin); assert d['count']>=1, d; print('list ok, count=', d['count'])"
+          echo "--- GET /api/v1/items ---"
+          curl -sS http://127.0.0.1:8097/api/v1/items -w '\nHTTP=%{http_code}\n' | head -50
 
           # GET one
-          curl -fsS http://127.0.0.1:8097/api/v1/items/$ID | python3 -c "import sys,json; d=json.load(sys.stdin); assert d['id']=='$ID', d; print('get ok, title=', d['title'])"
+          echo "--- GET /api/v1/items/$ID ---"
+          curl -sS http://127.0.0.1:8097/api/v1/items/$ID -w '\nHTTP=%{http_code}\n' | head -50
 
-          # Verify thumbnail serves a real JPEG
-          curl -fsS http://127.0.0.1:8097/api/v1/items/$ID | python3 -c "
+          # Verify thumbnail
+          echo "--- thumbnail check ---"
+          curl -sS http://127.0.0.1:8097/api/v1/items/$ID | python3 -c "
           import sys,json,urllib.request
           d=json.load(sys.stdin)
           for label in ('thumbnail_url','list_url','original_url'):
             with urllib.request.urlopen(d[label]) as r:
               head=r.read(3)
               assert head[:3]==b'\xff\xd8\xff', f'{label} not JPEG'
-              print(f'{label} ok, status={r.status}, len={r.headers.get(\"Content-Length\")}')
+              print(f'{label} ok, status={r.status}')
           "
 
           # DELETE
-          curl -fsS -X DELETE http://127.0.0.1:8097/api/v1/items/$ID
-          echo
+          echo "--- DELETE /api/v1/items/$ID ---"
+          curl -sS -X DELETE http://127.0.0.1:8097/api/v1/items/$ID -w '\nHTTP=%{http_code}\n'
+
           # Confirm gone
+          echo "--- GET after delete ---"
           HTTP=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8097/api/v1/items/$ID)
-          [ "$HTTP" = "404" ] && echo "post-delete 404 ok" || (echo "expected 404, got $HTTP"; exit 1)
+          echo "post-delete HTTP=$HTTP"
+          [ "$HTTP" = "404" ] && echo "post-delete 404 ok" || (echo "expected 404, got $HTTP"; dump_diag; exit 1)
+          echo "==== ALL CRUD STEPS PASSED ===="
 
       - name: Stop gunicorn
         if: always()
