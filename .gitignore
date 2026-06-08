@@ -1,0 +1,55 @@
+# macOS
+.DS_Store
+
+# IDEs
+.idea/
+*.iml
+.vscode/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+
+# Virtualenvs
+venv/
+.venv/
+env/
+
+# Logs
+*.log
+access.log
+error.log
+
+# Local config
+.env
+.env.local
+*.local
+
+# Build artifacts
+build/
+dist/
+*.app
+
+# iOS — Xcode
+*.xcodeproj/*
+!*.xcodeproj/project.pbxproj
+!*.xcodeproj/xcshareddata/
+*.xcworkspace/*
+!*.xcworkspace/contents.xcworkspacedata
+xcuserdata/
+*.xcuserstate
+*.moved-aside
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# Android (future)
+.gradle/
+local.properties
+*.apk
+*.aab
+*.keystore
+*.jks

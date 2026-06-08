@@ -1,0 +1,404 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		068DB3AC470BF5BB99702E28 /* LaopodadaApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D3C0FFC86AA9CCE777D83DE /* LaopodadaApp.swift */; };
+		1AF1478570CE91572679651A /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC6CCD16C71C4E48974CAF47 /* AppState.swift */; };
+		4869EA8728EF08E00D96F87D /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 863922F1380EF9A828381EA7 /* RootView.swift */; };
+		55D0819709DEC0A4335FFC10 /* WardrobeItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA68809D8C487A23512BEFEB /* WardrobeItem.swift */; };
+		5854CA218E704D7F04A8D710 /* WardrobeAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD0D95AD7EFEB04217163818 /* WardrobeAPI.swift */; };
+		5B09ED30D729C541D25EDE05 /* WardrobeDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8DC784A0A18A9A3977CCF07A /* WardrobeDetailView.swift */; };
+		78875D5B6E7B94440D95B4B4 /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42D613AB3874C4BDDB751A53 /* APIClient.swift */; };
+		7F71604C9B8777882EB578FB /* ImagePickers.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3ECB131064F750A656B49D8 /* ImagePickers.swift */; };
+		85923C3CEA79598BDAF69C8D /* PlaceholderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5790C2A326794F29942E4270 /* PlaceholderView.swift */; };
+		880A5817E9B949E88356BD3D /* WardrobeAddView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E730EA8E00830C5935BE96FA /* WardrobeAddView.swift */; };
+		8EAB111BEB43FA6D3E61272E /* ImageProcessor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A79154184824D991771BFB1A /* ImageProcessor.swift */; };
+		DCC62502CFAAA729DE1E1AB5 /* WardrobeListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD16D3BB20D739C0B5BDD089 /* WardrobeListView.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		0D3C0FFC86AA9CCE777D83DE /* LaopodadaApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaopodadaApp.swift; sourceTree = "<group>"; };
+		42D613AB3874C4BDDB751A53 /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
+		5790C2A326794F29942E4270 /* PlaceholderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaceholderView.swift; sourceTree = "<group>"; };
+		636BA6025154E4D1734D0023 /* laopodada.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = laopodada.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		863922F1380EF9A828381EA7 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
+		8DC784A0A18A9A3977CCF07A /* WardrobeDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WardrobeDetailView.swift; sourceTree = "<group>"; };
+		98926A046087F8A4CC8D5561 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		A79154184824D991771BFB1A /* ImageProcessor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageProcessor.swift; sourceTree = "<group>"; };
+		BC6CCD16C71C4E48974CAF47 /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
+		BD0D95AD7EFEB04217163818 /* WardrobeAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WardrobeAPI.swift; sourceTree = "<group>"; };
+		D3ECB131064F750A656B49D8 /* ImagePickers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImagePickers.swift; sourceTree = "<group>"; };
+		DD16D3BB20D739C0B5BDD089 /* WardrobeListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WardrobeListView.swift; sourceTree = "<group>"; };
+		E730EA8E00830C5935BE96FA /* WardrobeAddView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WardrobeAddView.swift; sourceTree = "<group>"; };
+		FA68809D8C487A23512BEFEB /* WardrobeItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WardrobeItem.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		023CAA58BD14E36CCB95F323 /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				D3ECB131064F750A656B49D8 /* ImagePickers.swift */,
+				A79154184824D991771BFB1A /* ImageProcessor.swift */,
+				5790C2A326794F29942E4270 /* PlaceholderView.swift */,
+			);
+			path = Shared;
+			sourceTree = "<group>";
+		};
+		0A8FD41D7ACB25D0A1D853AD /* Wardrobe */ = {
+			isa = PBXGroup;
+			children = (
+				E730EA8E00830C5935BE96FA /* WardrobeAddView.swift */,
+				8DC784A0A18A9A3977CCF07A /* WardrobeDetailView.swift */,
+				DD16D3BB20D739C0B5BDD089 /* WardrobeListView.swift */,
+			);
+			path = Wardrobe;
+			sourceTree = "<group>";
+		};
+		3B054AC5814D45019B76AA66 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				BC6CCD16C71C4E48974CAF47 /* AppState.swift */,
+				0D3C0FFC86AA9CCE777D83DE /* LaopodadaApp.swift */,
+				863922F1380EF9A828381EA7 /* RootView.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		3F3A7FF5DC37EA85536A34B2 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				FA68809D8C487A23512BEFEB /* WardrobeItem.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		611FC5129ECFE4D7FA0B6415 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				636BA6025154E4D1734D0023 /* laopodada.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		65EEA6BE2BA5FB2E2C85B8EF /* Sources */ = {
+			isa = PBXGroup;
+			children = (
+				3B054AC5814D45019B76AA66 /* App */,
+				3F3A7FF5DC37EA85536A34B2 /* Models */,
+				840CD12EA0F4F38FB4628062 /* Networking */,
+				023CAA58BD14E36CCB95F323 /* Shared */,
+				C94AE85F145751161DDFB8BF /* Support */,
+				0A8FD41D7ACB25D0A1D853AD /* Wardrobe */,
+			);
+			path = Sources;
+			sourceTree = "<group>";
+		};
+		79279F8A4095A72548A9B795 = {
+			isa = PBXGroup;
+			children = (
+				65EEA6BE2BA5FB2E2C85B8EF /* Sources */,
+				611FC5129ECFE4D7FA0B6415 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		840CD12EA0F4F38FB4628062 /* Networking */ = {
+			isa = PBXGroup;
+			children = (
+				42D613AB3874C4BDDB751A53 /* APIClient.swift */,
+				BD0D95AD7EFEB04217163818 /* WardrobeAPI.swift */,
+			);
+			path = Networking;
+			sourceTree = "<group>";
+		};
+		C94AE85F145751161DDFB8BF /* Support */ = {
+			isa = PBXGroup;
+			children = (
+				98926A046087F8A4CC8D5561 /* Info.plist */,
+			);
+			path = Support;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		131914B421B79AB4AF497936 /* laopodada */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 52CEFC6D8E5EE1C012F404AC /* Build configuration list for PBXNativeTarget "laopodada" */;
+			buildPhases = (
+				1964E3420533135C1C3F0E86 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = laopodada;
+			packageProductDependencies = (
+			);
+			productName = laopodada;
+			productReference = 636BA6025154E4D1734D0023 /* laopodada.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		AE4C472C536C1DCD470EE10F /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					131914B421B79AB4AF497936 = {
+						DevelopmentTeam = "";
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = 808FDD0EDDFEB6812A477650 /* Build configuration list for PBXProject "laopodada" */;
+			developmentRegion = "zh-Hans";
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				"zh-Hans",
+			);
+			mainGroup = 79279F8A4095A72548A9B795;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 611FC5129ECFE4D7FA0B6415 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				131914B421B79AB4AF497936 /* laopodada */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		1964E3420533135C1C3F0E86 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				78875D5B6E7B94440D95B4B4 /* APIClient.swift in Sources */,
+				1AF1478570CE91572679651A /* AppState.swift in Sources */,
+				7F71604C9B8777882EB578FB /* ImagePickers.swift in Sources */,
+				8EAB111BEB43FA6D3E61272E /* ImageProcessor.swift in Sources */,
+				068DB3AC470BF5BB99702E28 /* LaopodadaApp.swift in Sources */,
+				85923C3CEA79598BDAF69C8D /* PlaceholderView.swift in Sources */,
+				4869EA8728EF08E00D96F87D /* RootView.swift in Sources */,
+				5854CA218E704D7F04A8D710 /* WardrobeAPI.swift in Sources */,
+				880A5817E9B949E88356BD3D /* WardrobeAddView.swift in Sources */,
+				5B09ED30D729C541D25EDE05 /* WardrobeDetailView.swift in Sources */,
+				55D0819709DEC0A4335FFC10 /* WardrobeItem.swift in Sources */,
+				DCC62502CFAAA729DE1E1AB5 /* WardrobeListView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		7EBDF93F421851AC2239CCE7 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGNING_ALLOWED = NO;
+				CODE_SIGNING_REQUIRED = NO;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = "";
+				INFOPLIST_FILE = Sources/Support/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.sxliuyu.laopodada;
+				PRODUCT_NAME = laopodada;
+				SDKROOT = iphoneos;
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		8C727AA31BE22665A396C6BF /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				MARKETING_VERSION = 0.1.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_STRICT_CONCURRENCY = minimal;
+				SWIFT_VERSION = 5.9;
+			};
+			name = Release;
+		};
+		A9A2B50FD5BBC88AD9C91178 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				MARKETING_VERSION = 0.1.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_STRICT_CONCURRENCY = minimal;
+				SWIFT_VERSION = 5.9;
+			};
+			name = Debug;
+		};
+		EDA7D46B54B7F4A81AC1A3B9 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGNING_ALLOWED = NO;
+				CODE_SIGNING_REQUIRED = NO;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = "";
+				INFOPLIST_FILE = Sources/Support/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.sxliuyu.laopodada;
+				PRODUCT_NAME = laopodada;
+				SDKROOT = iphoneos;
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		52CEFC6D8E5EE1C012F404AC /* Build configuration list for PBXNativeTarget "laopodada" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				7EBDF93F421851AC2239CCE7 /* Debug */,
+				EDA7D46B54B7F4A81AC1A3B9 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		808FDD0EDDFEB6812A477650 /* Build configuration list for PBXProject "laopodada" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A9A2B50FD5BBC88AD9C91178 /* Debug */,
+				8C727AA31BE22665A396C6BF /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = AE4C472C536C1DCD470EE10F /* Project object */;
+}
