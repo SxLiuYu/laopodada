@@ -523,7 +523,7 @@ def delete_recipe(recipe_id: str):
 
 
 # ---------- Outfit recommendation ----------
-def _norm_color(c: str | None) -> str:
+def _norm_color(c):
     """Normalize a free-text color into one of the COLOR_HARMONY keys.
     Falls back to 'neutral' so it harmonizes with anything."""
     if not c:
@@ -563,7 +563,7 @@ def _harmony_score(colors: list[str]) -> float:
     return max(0.0, min(1.0, score))
 
 
-def _season_filter(category: str, season: str | None) -> bool:
+def _season_filter(category, season):
     """A few practical rules; can be loosened later."""
     if not season:
         return True
@@ -618,7 +618,7 @@ def _rule_pick(items_by_cat: dict[str, list[dict]], slots: list[str]) -> tuple[l
     return chosen, score, reason
 
 
-def _llm_note(occasion: str, season: str | None, items: list[dict]) -> str | None:
+def _llm_note(occasion, season, items):
     """Optional LLM styling tip. Only called if LAOPODADA_LLM_API_KEY is set.
     Off by default — safe fallback to rule-only output."""
     api_key = os.environ.get("LAOPODADA_LLM_API_KEY")
@@ -842,6 +842,14 @@ def list_outfits():
             "created_at": r["created_at"],
         })
     return jsonify(outfits=out)
+
+
+# ---------- Feedback count ----------
+@app.get("/api/v1/outfits/feedback-count")
+def feedback_count():
+    db = get_db()
+    row = db.execute("SELECT COUNT(*) c, MAX(created_at) last_at FROM outfit_feedback").fetchone()
+    return jsonify(count=row["c"], last_feedback_at=row["last_at"])
 
 
 @app.get("/api/v1/outfits/<outfit_id>")
