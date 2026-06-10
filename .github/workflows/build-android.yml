@@ -1,6 +1,6 @@
 name: Build Android APK (Capacitor)
 
-"on":
+on:
   push:
     branches: [main]
     paths:
@@ -41,7 +41,6 @@ jobs:
         timeout-minutes: 10
         env:
           npm_config_registry: https://registry.npmjs.org/
-          NPM_CONFIG_REGISTRY: https://registry.npmjs.org/
         run: |
           rm -f package-lock.json
           rm -rf node_modules
