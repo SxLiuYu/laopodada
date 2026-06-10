@@ -37,14 +37,20 @@ jobs:
         with:
           packages: 'platform-tools platforms;android-36 build-tools;36.0.0'
 
-      - name: Install npm dependencies (regen lockfile with npmjs registry for CI integrity)
+      - name: Install npm dependencies (override .npmrc to use official registry)
         timeout-minutes: 10
+        env:
+          npm_config_registry: https://registry.npmjs.org/
+          NPM_CONFIG_REGISTRY: https://registry.npmjs.org/
         run: |
           rm -f package-lock.json
+          rm -rf node_modules
+          echo "=== npm config before install ==="
+          npm config get registry
           echo "=== before install ==="
           ls -la
-          echo "=== install ==="
-          npm install --no-audit --no-fund --registry=https://registry.npmjs.org/ 2>&1 | tail -40
+          echo "=== install (official registry) ==="
+          npm install --no-audit --no-fund 2>&1 | tail -30
           echo "=== after install ==="
           ls -la node_modules/.bin/cap 2>&1 || echo "CAP MISSING"
           ls node_modules/@capacitor/ 2>&1 || echo "CAP DIR MISSING"
