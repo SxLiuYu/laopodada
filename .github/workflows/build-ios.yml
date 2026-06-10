@@ -35,7 +35,7 @@ jobs:
           npm install --no-audit --no-fund --registry=https://registry.npmjs.org/
 
       - name: Cap sync (web assets → ios)
-        run: ./node_modules/.bin/cap sync ios
+        run: node node_modules/@capacitor/cli/bin/capacitor sync ios
 
       - name: xcodebuild for simulator
         working-directory: ios/App

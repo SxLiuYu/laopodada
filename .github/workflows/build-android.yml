@@ -56,11 +56,12 @@ jobs:
 
       - name: Verify cap binary
         run: |
-          ls -la node_modules/.bin/cap
-          ./node_modules/.bin/cap --version
+          ls -la node_modules/.bin/cap 2>&1 || echo "CAP MISSING from .bin"
+          ls -la node_modules/@capacitor/cli/bin/capacitor 2>&1 || echo "CAP CLI BIN MISSING"
+          node node_modules/@capacitor/cli/bin/capacitor --version
 
       - name: Cap sync (web assets → android)
-        run: ./node_modules/.bin/cap sync android --verbose
+        run: node node_modules/@capacitor/cli/bin/capacitor sync android --verbose
 
       - name: Build Debug APK
         working-directory: android
