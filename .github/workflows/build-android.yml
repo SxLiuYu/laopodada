@@ -110,11 +110,16 @@ jobs:
 
       - name: Verify APK output
         run: |
-          echo "=== Search for APK ==="
+          echo "=== Search for APK (any location) ==="
           find . -name "*.apk" 2>/dev/null
-          echo "=== expected path ==="
+          echo "=== expected path /android/app/build/outputs/apk/debug/ ==="
           ls -la android/app/build/outputs/apk/debug/ 2>&1 || echo "DIR MISSING"
+          echo "=== broader: /android/app/build/outputs/apk/ ==="
           ls -la android/app/build/outputs/apk/ 2>&1 || echo "APK DIR MISSING"
+          echo "=== broader: /android/app/build/ ==="
+          find android/app/build -name "*.apk" 2>&1 || echo "NO APK in build/"
+          echo "=== broader: /android/app/build/outputs/ ==="
+          find android/app/build/outputs -type f 2>&1 | head -20
 
       - name: Upload Debug APK
         if: always()
@@ -125,7 +130,8 @@ jobs:
             android/app/build/outputs/apk/debug/app-debug.apk
             android/app/build/outputs/apk/debug/*.apk
             android/app/build/outputs/**/*.apk
-          if-no-files-found: warn
+            android/app/build/**/apk/debug/*.apk
+          if-no-files-found: error
           retention-days: 7
 
       - name: Upload Release APK
