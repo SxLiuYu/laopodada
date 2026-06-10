@@ -1,10 +1,9 @@
-// API_BASE is set by config.js (loaded first). config.js defaults to 192.168.1.10
-// (iOS sim host). We override for Android emulator (10.0.2.2 = host loopback).
+// API_BASE is set by config.js (loaded first). Defaults to public deployment
+// https://123.57.107.21:8088. Override in config.js for local dev.
 (function() {
-  var isAndroid = /Android/i.test(navigator.userAgent || '');
-  if (isAndroid) {
-    window.API_BASE = 'http://10.0.2.2:8097';
-  }
+  // No runtime override — config.js is the single source of truth.
+  // For local dev, edit config.js to 'http://192.168.1.10:8097' (iOS sim) or
+  // 'http://10.0.2.2:8097' (Android emulator).
 })();
 
 // Workaround: Capacitor WKWebView fetch on custom scheme blocked by SOP.
