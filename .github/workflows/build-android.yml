@@ -85,7 +85,19 @@ jobs:
         working-directory: android
         run: |
           chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon --stacktrace
+          (./gradlew assembleDebug --no-daemon --stacktrace; echo "EXIT=$?") 2>&1 | tee /tmp/gradle-debug.log
+          echo "=== Log dump (last 200) ==="
+          tail -200 /tmp/gradle-debug.log
+          echo "=== End log ==="
+
+      - name: Upload gradle debug log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gradle-debug-log
+          path: /tmp/gradle-debug.log
+          if-no-files-found: warn
+          retention-days: 1
 
       - name: Build Release APK (unsigned)
         working-directory: android
