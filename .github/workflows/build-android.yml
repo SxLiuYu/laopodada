@@ -46,19 +46,32 @@ jobs:
           rm -rf node_modules
           echo "=== npm config before install ==="
           npm config get registry
+          echo "=== npm/node versions ==="
+          npm --version
+          node --version
           echo "=== before install ==="
           ls -la
           echo "=== install (official registry) ==="
-          npm install --no-audit --no-fund 2>&1 | tail -30
+          npm install --no-audit --no-fund --include=dev 2>&1 | tail -40
           echo "=== after install ==="
-          ls -la node_modules/.bin/cap 2>&1 || echo "CAP MISSING"
-          ls node_modules/@capacitor/ 2>&1 || echo "CAP DIR MISSING"
+          echo "--- top-level node_modules ---"
+          ls -la node_modules/ 2>&1 | head -30
+          echo "--- .bin/cap ---"
+          ls -la node_modules/.bin/cap 2>&1 || echo "CAP MISSING from .bin"
+          echo "--- @capacitor contents ---"
+          ls -la node_modules/@capacitor/ 2>&1 || echo "CAP DIR MISSING"
+          echo "--- @capacitor/cli/bin ---"
+          ls -la node_modules/@capacitor/cli/bin/ 2>&1 || echo "CAP CLI BIN MISSING"
+          echo "--- find any capacitor executable ---"
+          find node_modules -name "capacitor" -type f 2>/dev/null | head -5
 
       - name: Verify cap binary
+        continue-on-error: true
         run: |
           ls -la node_modules/.bin/cap 2>&1 || echo "CAP MISSING from .bin"
           ls -la node_modules/@capacitor/cli/bin/capacitor 2>&1 || echo "CAP CLI BIN MISSING"
-          node node_modules/@capacitor/cli/bin/capacitor --version
+          (./node_modules/.bin/cap --version 2>&1 || true) | head -5
+          (node node_modules/@capacitor/cli/bin/capacitor --version 2>&1 || true) | head -5
 
       - name: Cap sync (web assets → android)
         run: node node_modules/@capacitor/cli/bin/capacitor sync android --verbose
