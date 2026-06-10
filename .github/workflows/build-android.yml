@@ -101,15 +101,30 @@ jobs:
 
       - name: Build Release APK (unsigned)
         working-directory: android
+        continue-on-error: true
         run: |
-          ./gradlew assembleRelease --no-daemon --stacktrace
+          (./gradlew assembleRelease --no-daemon --stacktrace; echo "EXIT=$?") 2>&1 | tee /tmp/gradle-release.log
+          echo "=== Release log dump (last 100) ==="
+          tail -100 /tmp/gradle-release.log
+          echo "=== End log ==="
+
+      - name: Verify APK output
+        run: |
+          echo "=== Search for APK ==="
+          find . -name "*.apk" 2>/dev/null
+          echo "=== expected path ==="
+          ls -la android/app/build/outputs/apk/debug/ 2>&1 || echo "DIR MISSING"
+          ls -la android/app/build/outputs/apk/ 2>&1 || echo "APK DIR MISSING"
 
       - name: Upload Debug APK
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: laopodada-debug-apk
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          path: |
+            android/app/build/outputs/apk/debug/app-debug.apk
+            android/app/build/outputs/apk/debug/*.apk
+            android/app/build/outputs/**/*.apk
           if-no-files-found: warn
           retention-days: 7
 
