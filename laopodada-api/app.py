@@ -78,6 +78,18 @@ DRESS_ONLY = "dress"
 app = Flask(__name__)
 app.config["MAX_CONTENT_LENGTH"] = MAX_UPLOAD_BYTES
 
+# CORS: allow Capacitor WebView (capacitor://localhost / https://localhost) to call our API
+@app.after_request
+def _cors(resp):
+    resp.headers["Access-Control-Allow-Origin"] = "*"
+    resp.headers["Access-Control-Allow-Methods"] = "GET, POST, DELETE, OPTIONS"
+    resp.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
+    return resp
+
+@app.route("/<path:_>", methods=["OPTIONS"])
+def _preflight(_):
+    return ("", 204)
+
 
 # ---------- DB ----------
 def get_db() -> sqlite3.Connection:
@@ -917,3 +929,8 @@ def _toolarge(e):
 
 # ---------- Bootstrap ----------
 init_db()
+
+if __name__ == "__main__":
+    import os as _os
+    _port = int(_os.environ.get("LAOPODADA_API_PORT", "8097"))
+    app.run(host="0.0.0.0", port=_port, debug=False)

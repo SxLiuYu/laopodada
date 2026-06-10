@@ -139,15 +139,6 @@ html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Sego
   color: #555;
   margin-bottom: 8px;
 }
-.llm-note {
-  background: linear-gradient(135deg, #F0F4FF 0%, #E8F0FE 100%);
-  border-left: 3px solid #5B8DEF;
-  border-radius: 6px;
-  padding: 8px 10px;
-  font-size: 12px;
-  color: #3A5BA7;
-  margin-bottom: 8px;
-}
 .outfit-score {
   display: flex;
   align-items: center;
@@ -182,15 +173,15 @@ html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Sego
 /* ── occasion buttons ── */
 .occasion-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
   padding: 14px;
 }
 .oc-btn {
-  padding: 18px 8px;
+  padding: 20px 12px;
   border-radius: 12px;
   border: none;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
   color: #fff;
   cursor: pointer;
@@ -199,8 +190,6 @@ html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Sego
 .oc-btn.work     { background: #5BA4CF; }
 .oc-btn.date     { background: #C77DFF; }
 .oc-btn.party    { background: #F4C430; color: #333; }
-.oc-btn.sport    { background: #27AE60; }
-.oc-btn.home     { background: #8E44AD; }
 
 /* ── season/weather row ── */
 .weather-row {

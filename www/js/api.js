@@ -1,7 +1,39 @@
-const API_BASE = 'http://123.57.107.21:8088';
+// API_BASE is set by config.js (loaded first)
+window.API_BASE = 'http://192.168.1.10:8097';
+
+// Workaround: Capacitor WKWebView fetch on custom scheme blocked by SOP.
+// Wrap fetch() to fall back to XHR (not subject to fetch SOP checks).
+(function() {
+  const origFetch = window.fetch.bind(window);
+  window.fetch = function(url, opts) {
+    if (typeof url === 'string' && url.startsWith('http')) {
+      return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        const method = (opts && opts.method) || 'GET';
+        xhr.open(method, url, true);
+        if (opts && opts.headers) {
+          for (const k in opts.headers) xhr.setRequestHeader(k, opts.headers[k]);
+        }
+        xhr.onload = () => {
+          resolve({
+            ok: xhr.status >= 200 && xhr.status < 300,
+            status: xhr.status,
+            statusText: xhr.statusText,
+            json: () => Promise.resolve(JSON.parse(xhr.responseText)),
+            text: () => Promise.resolve(xhr.responseText),
+          });
+        };
+        xhr.onerror = () => reject(new TypeError('XHR failed: ' + url));
+        xhr.ontimeout = () => reject(new TypeError('XHR timeout: ' + url));
+        try { xhr.send(opts && opts.body); } catch (e) { reject(e); }
+      });
+    }
+    return origFetch(url, opts);
+  };
+})();
 
 async function postItem(formData) {
-  const res = await fetch(`${API_BASE}/api/v1/items`, {
+  const res = await fetch(`${window.API_BASE}/api/v1/items`, {
     method: 'POST',
     body: formData,
   });
@@ -13,7 +45,7 @@ async function postItem(formData) {
 }
 
 async function listItems(category, limit = 50) {
-  let url = `${API_BASE}/api/v1/items?limit=${limit}`;
+  let url = `${window.API_BASE}/api/v1/items?limit=${limit}`;
   if (category && category !== 'all') url += `&category=${category}`;
   const res = await fetch(url);
   if (!res.ok) throw new Error('list items failed');
@@ -21,19 +53,19 @@ async function listItems(category, limit = 50) {
 }
 
 async function getItem(id) {
-  const res = await fetch(`${API_BASE}/api/v1/items/${id}`);
+  const res = await fetch(`${window.API_BASE}/api/v1/items/${id}`);
   if (!res.ok) throw new Error('get item failed');
   return res.json();
 }
 
 async function deleteItem(id) {
-  const res = await fetch(`${API_BASE}/api/v1/items/${id}`, { method: 'DELETE' });
+  const res = await fetch(`${window.API_BASE}/api/v1/items/${id}`, { method: 'DELETE' });
   if (!res.ok) throw new Error('delete failed');
   return res.json();
 }
 
 async function recommendOutfit(occasion, season, weather, limit = 3) {
-  const res = await fetch(`${API_BASE}/api/v1/outfits/recommend`, {
+  const res = await fetch(`${window.API_BASE}/api/v1/outfits/recommend`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ occasion, season, weather, limit }),
@@ -43,13 +75,13 @@ async function recommendOutfit(occasion, season, weather, limit = 3) {
 }
 
 async function getOutfit(id) {
-  const res = await fetch(`${API_BASE}/api/v1/outfits/${id}`);
+  const res = await fetch(`${window.API_BASE}/api/v1/outfits/${id}`);
   if (!res.ok) throw new Error('get outfit failed');
   return res.json();
 }
 
 async function feedbackOutfit(id, score) {
-  const res = await fetch(`${API_BASE}/api/v1/outfits/${id}/feedback`, {
+  const res = await fetch(`${window.API_BASE}/api/v1/outfits/${id}/feedback`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ score }),
@@ -59,49 +91,7 @@ async function feedbackOutfit(id, score) {
 }
 
 async function listOutfits(limit = 20) {
-  const res = await fetch(`${API_BASE}/api/v1/outfits?limit=${limit}`);
+  const res = await fetch(`${window.API_BASE}/api/v1/outfits?limit=${limit}`);
   if (!res.ok) throw new Error('list outfits failed');
-  return res.json();
-}
-
-async function listRecipes(category, difficulty, tag, limit = 50) {
-  let url = `${API_BASE}/api/v1/recipes?limit=${limit}`;
-  if (category) url += `&category=${category}`;
-  if (difficulty) url += `&difficulty=${difficulty}`;
-  if (tag) url += `&tag=${encodeURIComponent(tag)}`;
-  const res = await fetch(url);
-  if (!res.ok) throw new Error('list recipes failed');
-  return res.json();
-}
-
-async function createRecipe(body) {
-  const res = await fetch(`${API_BASE}/api/v1/recipes`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: res.statusText }));
-    throw new Error(err.error || err.description || 'create recipe failed');
-  }
-  return res.json();
-}
-
-async function getRecipe(id) {
-  const res = await fetch(`${API_BASE}/api/v1/recipes/${id}`);
-  if (!res.ok) throw new Error('get recipe failed');
-  return res.json();
-}
-
-async function deleteRecipe(id) {
-  const res = await fetch(`${API_BASE}/api/v1/recipes/${id}`, { method: 'DELETE' });
-  if (!res.ok) throw new Error('delete failed');
-  return res.json();
-}
-
-async function getFeedbackCount(userId) {
-  const url = `${API_BASE}/api/v1/outfits/feedback-count${userId ? '?user_id=' + encodeURIComponent(userId) : ''}`;
-  const res = await fetch(url);
-  if (!res.ok) throw new Error('get feedback count failed');
   return res.json();
 }

@@ -1,1 +1,1 @@
-const API_BASE = 'http://123.57.107.21:8088';
+window.API_BASE = 'http://192.168.1.10:8097';

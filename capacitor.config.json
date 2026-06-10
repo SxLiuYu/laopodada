@@ -1,0 +1,10 @@
+{
+  "appId": "com.laopodada.app",
+  "appName": "laopodada",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https",
+    "iosScheme": "capacitor",
+    "cleartext": true
+  }
+}
