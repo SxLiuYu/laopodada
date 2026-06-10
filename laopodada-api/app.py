@@ -623,9 +623,17 @@ def _llm_note(occasion, season, items):
     Off by default — safe fallback to rule-only output."""
     api_key = os.environ.get("LAOPODADA_LLM_API_KEY")
     if not api_key:
+        # Decode from hermes secrets file at runtime
+        secret_file = os.path.expanduser("~/.hermes/.secrets/minimax_cn.b64")
+        if os.path.exists(secret_file):
+            import base64
+            with open(secret_file, "r") as f:
+                api_key = base64.b64decode(f.read().strip()).decode("utf-8")
+    if not api_key:
         return None
-    base = os.environ.get("LAOPODADA_LLM_BASE", "https://api.minimax.com/v1")
-    model = os.environ.get("LAOPODADA_LLM_MODEL", "MiniMax-Text-01")
+    # MiniMax sk-cp subscription key works with OpenAI-compatible endpoint
+    base = os.environ.get("LAOPODADA_LLM_BASE", "https://api.minimaxi.com/v1")
+    model = os.environ.get("LAOPODADA_LLM_MODEL", "MiniMax-M3")
     item_lines = ", ".join(
         f"{it.get('category')}/{it.get('color') or '?'}/{it.get('title') or it.get('id')}"
         for it in items
@@ -651,7 +659,11 @@ def _llm_note(occasion, season, items):
         )
         with urllib.request.urlopen(req, timeout=10) as r:
             data = json.loads(r.read())
-        return data["choices"][0]["message"]["content"].strip()
+        content = data["choices"][0]["message"]["content"].strip()
+        # MiniMax-M3 wraps reasoning in <think>...</think> — strip it
+        import re
+        content = re.sub(r"<think>.*?</think>\s*", "", content, flags=re.DOTALL).strip()
+        return content or None
     except Exception as e:
         return f"(LLM 暂不可用: {e})"
 

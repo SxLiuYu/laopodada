@@ -38,19 +38,29 @@ jobs:
           pod install
         continue-on-error: true
 
-      - name: Build iOS (xcodebuild archive)
+      - name: Build iOS .app (xcodebuild for simulator)
         run: |
           cd cordova/platforms/ios
-          xcodebuild -workspace 老婆哒哒.xcworkspace -scheme 老婆哒哒 -configuration Debug -sdk iphonesimulator -derivedDataPath build CODE_SIGNING_ALLOWED=NO clean archive
-        continue-on-error: true
+          xcodebuild -workspace 老婆哒哒.xcworkspace \
+            -scheme 老婆哒哒 \
+            -configuration Release \
+            -sdk iphonesimulator \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            clean build
 
-      - name: Upload IPA / build dir
+      - name: Package .app into zip
+        run: |
+          cd cordova/platforms/ios
+          # The .app bundle lives in build/Build/Products/Release-iphonesimulator/
+          zip -r /tmp/ios-build.zip build/Build/Products/Release-iphonesimulator/老婆哒哒.app
+
+      - name: Upload iOS build artifact
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: ios-build
-          path: |
-            cordova/platforms/ios/build/
-            cordova/platforms/ios/老婆哒哒.xcarchive/
+          path: /tmp/ios-build.zip
           retention-days: 3
-          if-no-files-found: warn
+          if-no-files-found: error

@@ -6,7 +6,10 @@ function renderProfilePage() {
   const page = document.getElementById('page-profile');
   page.classList.add('active');
   page.innerHTML = `
-    <div class="page-header">我的</div>
+    <div class="page-header" style="display:flex;align-items:center;justify-content:space-between;">
+      <span>我的</span>
+      <button onclick="loadProfileStats()" style="background:none;border:none;color:#fff;font-size:12px;cursor:pointer;padding:4px 8px;border-radius:6px;border:1px solid rgba(255,255,255,.4);">🔄 同步</button>
+    </div>
     <div class="profile-stats" id="profile-stats">
       <div class="stat-card">
         <div class="stat-num" id="stat-items">–</div>
@@ -31,18 +34,21 @@ function renderProfilePage() {
 
 async function loadProfileStats() {
   try {
-    const [itemsData, outfitsData] = await Promise.all([
+    const [itemsData, outfitsData, feedbackData] = await Promise.all([
       listItems(null, 1),
       listOutfits(20),
+      getFeedbackCount().catch(() => ({ count: 0, last_feedback_at: null })),
     ]);
     const totalItems = itemsData.count || 0;
     const outfits = outfitsData.outfits || [];
-    const totalFeedbacks = outfits.filter(o => o.id).length; // rough count
+    const totalFeedbacks = feedbackData.count || 0;
+
     document.getElementById('stat-items').textContent = totalItems;
     document.getElementById('stat-outfits').textContent = outfits.length;
-    // feedbacks: count from localStorage if available
-    const stored = parseInt(localStorage.getItem('feedback_count') || '0');
-    document.getElementById('stat-feedbacks').textContent = stored;
+    document.getElementById('stat-feedbacks').textContent = totalFeedbacks;
+
+    // store for optimistic updates
+    profileCache.feedbacks = totalFeedbacks;
 
     const list = document.getElementById('history-list');
     if (!outfits.length) {

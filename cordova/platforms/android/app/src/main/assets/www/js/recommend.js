@@ -34,6 +34,8 @@ function renderRecommendPage() {
       <button class="oc-btn work" onclick="doRecommend('work')">💼&nbsp;上班</button>
       <button class="oc-btn date" onclick="doRecommend('date')">💕&nbsp;约会</button>
       <button class="oc-btn party" onclick="doRecommend('party')">🎉&nbsp;派对</button>
+      <button class="oc-btn sport" onclick="doRecommend('sport')">🏃&nbsp;运动</button>
+      <button class="oc-btn home" onclick="doRecommend('home')">🏠&nbsp;居家</button>
     </div>
     <div id="outfit-results"></div>
   `;
@@ -68,7 +70,8 @@ async function doRecommend(occasion) {
             <img class="outfit-item-thumb" src="${item.thumb_url || item.list_url || ''}" alt="${item.title || item.category}"
                  onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22><rect fill=%22%23f0f0f0%22 width=%2264%22 height=%2264%22/><text x=%2232%22 y=%2236%22 text-anchor=%22middle%22 fill=%22%23ccc%22 font-size=%2220%22>👗</text></svg>'">`).join('')}
         </div>
-        <div class="outfit-reason">${o.reason || ''} ${o.llm_note ? '<br><small style="color:#999">'+o.llm_note+'</small>' : ''}</div>
+        <div class="outfit-reason">${o.reason || ''}</div>
+        ${o.llm_note ? `<div class="llm-note">💡 ${o.llm_note}</div>` : ''}
         <div class="outfit-score">
           <span class="score-label">时尚分</span>
           <div class="score-bar"><div class="score-fill" style="width:${Math.round((o.style_score||0)*100)}%"></div></div>
@@ -90,6 +93,12 @@ let outfitIdMap = {};
 async function sendFeedback(idx, score) {
   const outfitId = outfitIdMap[idx];
   if (!outfitId) { toast('无效的 outfit'); return; }
+  // optimistic update
+  const statEl = document.getElementById('stat-feedbacks');
+  if (statEl) {
+    const cur = parseInt(statEl.textContent) || 0;
+    statEl.textContent = cur + 1;
+  }
   try {
     await feedbackOutfit(outfitId, score);
     const card = document.getElementById(`outfit-${idx}`);
@@ -98,5 +107,12 @@ async function sendFeedback(idx, score) {
         `<span style="color:#2E9E7D;font-size:13px;">已反馈 ${score > 0 ? '👍' : '👎'}，感谢～</span>`;
     }
     toast('反馈已记录 ✨');
-  } catch(e) { toast('反馈失败'); }
+  } catch(e) {
+    // revert optimistic update
+    if (statEl) {
+      const cur = parseInt(statEl.textContent) || 1;
+      statEl.textContent = Math.max(0, cur - 1);
+    }
+    toast('反馈失败');
+  }
 }

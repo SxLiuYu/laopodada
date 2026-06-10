@@ -19,6 +19,7 @@ function switchTab(tab) {
     if (tab === 'camera') renderCameraPage();
     if (tab === 'recommend' && !page.querySelector('.occasion-grid')) renderRecommendPage();
     if (tab === 'profile' && !page.querySelector('.profile-stats')) renderProfilePage();
+    if (tab === 'recipe' && !page.querySelector('.filter-bar')) renderRecipePage();
   }
 }
 
