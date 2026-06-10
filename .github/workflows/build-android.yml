@@ -77,10 +77,19 @@ jobs:
         run: |
           echo "=== Running cap sync android ==="
           set -o pipefail
-          node node_modules/@capacitor/cli/bin/capacitor sync android 2>&1 | head -200
-          EXIT_CODE=${PIPESTATUS[0]}
-          echo "=== cap sync exit code: $EXIT_CODE ==="
-          exit $EXIT_CODE
+          node node_modules/@capacitor/cli/bin/capacitor sync android > /tmp/cap-sync.log 2>&1 || EXIT_CODE=$?
+          cat /tmp/cap-sync.log | head -300
+          echo "=== cap sync exit code: ${EXIT_CODE:-0} ==="
+          if [ -n "$EXIT_CODE" ]; then exit $EXIT_CODE; fi
+
+      - name: Upload cap sync log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cap-sync-log
+          path: /tmp/cap-sync.log
+          if-no-files-found: warn
+          retention-days: 1
 
       - name: Build Debug APK
         working-directory: android
