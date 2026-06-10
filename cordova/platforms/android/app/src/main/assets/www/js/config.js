@@ -1,1 +1,1 @@
-const API_BASE = 'http://123.57.107.21:8088/laopodada';
+window.API_BASE = 'http://123.57.107.21:8088/laopodada';

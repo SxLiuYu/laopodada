@@ -39,8 +39,9 @@ async function loadWardrobe() {
         </div>
       </div>`).join('');
   } catch(e) {
+    console.error('[WARDROBE] listItems error:', e.name, e.message, e.stack);
     document.getElementById('wardrobe-grid').innerHTML =
-      `<div class="empty-state"><span class="emoji">⚠️</span>加载失败：${e.message}</div>`;
+      `<div class="empty-state"><span class="emoji">⚠️</span>加载失败：${e.name} | ${e.message}</div>`;
   }
 }
 
