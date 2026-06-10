@@ -40,8 +40,13 @@ jobs:
       - name: Install npm dependencies (use install, not ci, since lockfile integrity pinned to npmmirror)
         run: npm install --no-audit --no-fund --registry=https://registry.npmjs.org/
 
+      - name: Verify cap binary
+        run: |
+          ls -la node_modules/.bin/cap
+          ./node_modules/.bin/cap --version
+
       - name: Cap sync (web assets → android)
-        run: ./node_modules/.bin/cap sync android
+        run: ./node_modules/.bin/cap sync android --verbose
 
       - name: Build Debug APK
         working-directory: android
