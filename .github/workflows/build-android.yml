@@ -74,7 +74,13 @@ jobs:
           (node node_modules/@capacitor/cli/bin/capacitor --version 2>&1 || true) | head -5
 
       - name: Cap sync (web assets → android)
-        run: node node_modules/@capacitor/cli/bin/capacitor sync android --verbose
+        run: |
+          echo "=== Running cap sync android ==="
+          set -o pipefail
+          node node_modules/@capacitor/cli/bin/capacitor sync android 2>&1 | head -200
+          EXIT_CODE=${PIPESTATUS[0]}
+          echo "=== cap sync exit code: $EXIT_CODE ==="
+          exit $EXIT_CODE
 
       - name: Build Debug APK
         working-directory: android
