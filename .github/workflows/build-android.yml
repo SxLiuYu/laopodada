@@ -120,6 +120,32 @@ jobs:
           find android/app/build -name "*.apk" 2>&1 || echo "NO APK in build/"
           echo "=== broader: /android/app/build/outputs/ ==="
           find android/app/build/outputs -type f 2>&1 | head -20
+          echo "=== save debug to file ==="
+          {
+            echo "=== Run $GITHUB_RUN_ID ==="
+            echo "=== Verify APK output ==="
+            find . -name "*.apk" 2>/dev/null
+            echo "--- outputs/ tree ---"
+            find android/app/build/outputs -type f 2>&1 | head -20
+            echo "--- gradle-debug.log ---"
+            cat /tmp/gradle-debug.log 2>&1 | tail -150
+            echo "--- gradle-release.log ---"
+            cat /tmp/gradle-release.log 2>&1 | tail -50
+          } > /tmp/CI-DEBUG.md
+          ls -la /tmp/CI-DEBUG.md
+
+      - name: Commit debug log to ci-debug-logs branch
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "actions@users.noreply.github.com"
+          git checkout --orphan ci-debug-logs 2>/dev/null || git checkout ci-debug-logs
+          git rm -rf . 2>/dev/null || true
+          cp /tmp/CI-DEBUG.md DEBUG-LOG.md
+          git add DEBUG-LOG.md
+          git commit -m "ci-debug: run $GITHUB_RUN_ID sha $GITHUB_SHA" 2>&1
+          git push -f origin ci-debug-logs 2>&1 | tail -5
+          echo "=== committed ==="
 
       - name: Upload Debug APK
         if: always()
