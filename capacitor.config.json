@@ -3,7 +3,7 @@
   "appName": "laopodada",
   "webDir": "www",
   "server": {
-    "androidScheme": "https",
+    "androidScheme": "http",
     "iosScheme": "capacitor",
     "cleartext": true
   }

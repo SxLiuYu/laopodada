@@ -1,5 +1,11 @@
-// API_BASE is set by config.js (loaded first)
-window.API_BASE = 'http://192.168.1.10:8097';
+// API_BASE is set by config.js (loaded first). config.js defaults to 192.168.1.10
+// (iOS sim host). We override for Android emulator (10.0.2.2 = host loopback).
+(function() {
+  var isAndroid = /Android/i.test(navigator.userAgent || '');
+  if (isAndroid) {
+    window.API_BASE = 'http://10.0.2.2:8097';
+  }
+})();
 
 // Workaround: Capacitor WKWebView fetch on custom scheme blocked by SOP.
 // Wrap fetch() to fall back to XHR (not subject to fetch SOP checks).
