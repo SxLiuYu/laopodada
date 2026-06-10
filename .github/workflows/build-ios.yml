@@ -1,16 +1,22 @@
-name: Build iOS
+name: Build iOS (Capacitor)
 
 on:
   push:
     branches: [main]
     paths:
       - 'www/**'
-      - 'cordova/**'
+      - 'ios/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'capacitor.config.json'
       - '.github/workflows/build-ios.yml'
+  workflow_dispatch:
 
 jobs:
   build-ios:
     runs-on: macos-14
+    timeout-minutes: 30
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -19,42 +25,35 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: 'npm'
 
-      - name: Setup Xcode
-        uses: maxim-lobanov/setup-xcode@v1
-        with:
-          xcode-version: '15.3'
+      - name: Setup Xcode 15.4
+        run: sudo xcode-select -s /Applications/Xcode_15.4.app/Contents/Developer
 
-      - name: Install Cordova dependencies
-        run: npm install
-        working-directory: ./cordova
+      - name: Install npm dependencies
+        run: npm ci
 
-      # iOS platform files are already in the repo (committed in this same workflow)
-      # No need to re-add — xcodebuild uses the checked-out files directly
+      - name: Cap sync (web assets → ios)
+        run: npx cap sync ios
 
-      - name: Pod install (CocoaPods)
+      - name: xcodebuild for simulator
+        working-directory: ios/App
         run: |
-          cd cordova/platforms/ios
-          pod install
-        continue-on-error: true
-
-      - name: Build iOS .app (xcodebuild for simulator)
-        run: |
-          cd cordova/platforms/ios
-          xcodebuild -workspace 老婆哒哒.xcworkspace \
-            -scheme 老婆哒哒 \
+          xcodebuild \
+            -project App.xcodeproj \
+            -scheme App \
             -configuration Release \
             -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
             -derivedDataPath build \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
-            clean build
+            build | tail -50
 
       - name: Package .app into zip
+        working-directory: ios/App
         run: |
-          cd cordova/platforms/ios
-          # The .app bundle lives in build/Build/Products/Release-iphonesimulator/
-          zip -r /tmp/ios-build.zip build/Build/Products/Release-iphonesimulator/老婆哒哒.app
+          zip -r /tmp/ios-build.zip build/Build/Products/Release-iphonesimulator/App.app
 
       - name: Upload iOS build artifact
         if: always()
@@ -62,5 +61,5 @@ jobs:
         with:
           name: ios-build
           path: /tmp/ios-build.zip
-          retention-days: 3
-          if-no-files-found: error
+          retention-days: 7
+          if-no-files-found: warn

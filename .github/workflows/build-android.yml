@@ -1,16 +1,22 @@
-name: Build Android APK
+name: Build Android APK (Capacitor)
 
 on:
   push:
     branches: [main]
     paths:
       - 'www/**'
-      - 'cordova/**'
+      - 'android/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'capacitor.config.json'
       - '.github/workflows/build-android.yml'
+  workflow_dispatch:
 
 jobs:
   build-android:
     runs-on: ubuntu-22.04
+    timeout-minutes: 30
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -19,53 +25,50 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: 'npm'
 
-      - name: Setup JDK 17
+      - name: Setup JDK 21
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '17'
+          java-version: '21'
 
       - name: Setup Android SDK
-        uses: android-actions/setup-android@v4
+        uses: android-actions/setup-android@v3
         with:
-          packages: 'platform-tools platforms;android-32 build-tools;32.0.0'
+          packages: 'platform-tools platforms;android-36 build-tools;36.0.0'
 
-      - name: Setup Gradle 7.6.4
-        uses: gradle/actions/setup-gradle@v3
-        with:
-          gradle-version: '7.6.4'
+      - name: Install npm dependencies
+        run: npm ci
 
-      - name: Install dependencies
-        run: npm install
+      - name: Cap sync (web assets → android)
+        run: npx cap sync android
 
-      - name: Install Cordova dependencies
-        run: npm install
-        working-directory: ./cordova
-
-      - name: Remove existing Android platform
-        run: rm -rf cordova/platforms/android
-
-      - name: Add Android platform (pin 11.0.0)
-        run: npx cordova platform add android@11.0.0
-        working-directory: ./cordova
-
-      - name: Build Android APK
+      - name: Build Debug APK
+        working-directory: android
         run: |
-          export ANDROID_SDK_ROOT=/usr/local/lib/android/sdk
-          export ANDROID_HOME=/usr/local/lib/android/sdk
-          export PATH=$PATH:$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools
-          cd cordova/platforms/android
-          # cordova-android@11.0.0 doesn't ship gradlew; generate it from gradle.properties template
-          gradle wrapper --gradle-version 7.6.4 --distribution-type bin
           chmod +x gradlew
-          ./gradlew assembleRelease --no-daemon --stacktrace 2>&1
-        continue-on-error: true
+          ./gradlew assembleDebug --no-daemon --stacktrace
 
-      - name: Upload unsigned APK
+      - name: Build Release APK (unsigned)
+        working-directory: android
+        run: |
+          ./gradlew assembleRelease --no-daemon --stacktrace
+
+      - name: Upload Debug APK
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: apk-release
-          path: cordova/platforms/android/app/build/outputs/apk/release/
-          retention-days: 3
+          name: laopodada-debug-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: warn
+          retention-days: 7
+
+      - name: Upload Release APK
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: laopodada-release-apk
+          path: android/app/build/outputs/apk/release/
+          if-no-files-found: warn
+          retention-days: 7
