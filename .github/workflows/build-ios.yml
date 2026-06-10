@@ -29,8 +29,8 @@ jobs:
       - name: Setup Xcode 15.4
         run: sudo xcode-select -s /Applications/Xcode_15.4.app/Contents/Developer
 
-      - name: Install npm dependencies
-        run: npm ci
+      - name: Install npm dependencies (use install, not ci, since lockfile integrity pinned to npmmirror)
+        run: npm install --no-audit --no-fund --registry=https://registry.npmjs.org/
 
       - name: Cap sync (web assets → ios)
         run: npx cap sync ios

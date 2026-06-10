@@ -37,8 +37,8 @@ jobs:
         with:
           packages: 'platform-tools platforms;android-36 build-tools;36.0.0'
 
-      - name: Install npm dependencies
-        run: npm ci
+      - name: Install npm dependencies (use install, not ci, since lockfile integrity pinned to npmmirror)
+        run: npm install --no-audit --no-fund --registry=https://registry.npmjs.org/
 
       - name: Cap sync (web assets → android)
         run: npx cap sync android
