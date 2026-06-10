@@ -1,6 +1,6 @@
 name: Build Android APK (Capacitor)
 
-on:
+"on":
   push:
     branches: [main]
     paths:
