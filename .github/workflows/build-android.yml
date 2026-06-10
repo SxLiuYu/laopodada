@@ -37,8 +37,10 @@ jobs:
         with:
           packages: 'platform-tools platforms;android-36 build-tools;36.0.0'
 
-      - name: Install npm dependencies (use install, not ci, since lockfile integrity pinned to npmmirror)
-        run: npm install --no-audit --no-fund --registry=https://registry.npmjs.org/
+      - name: Install npm dependencies (regen lockfile with npmjs registry for CI integrity)
+        run: |
+          rm -f package-lock.json
+          npm install --no-audit --no-fund --registry=https://registry.npmjs.org/
 
       - name: Verify cap binary
         run: |
