@@ -1,0 +1,20 @@
+/\* recommend.css - standalone recommendation page styles \*/
+#page-recommend { display: flex; flex-direction: column; }
+.rec-input-area { display: flex; gap: 8px; padding: 12px; background: #fff; border-bottom: 1px solid #eee; }
+.rec-text-input { flex: 1; padding: 10px 12px; border: 1px solid #FF8C94; border-radius: 8px; font-size: 15px; outline: none; }
+.rec-btn-generate { background: #FF8C94; color: #fff; border: none; border-radius: 8px; padding: 10px 20px; font-size: 15px; cursor: pointer; white-space: nowrap; }
+.rec-btn-generate:active { background: #e6777d; }
+.rec-loading { text-align: center; padding: 24px; color: #FF8C94; font-size: 14px; }
+.rec-error { text-align: center; padding: 12px; color: #f87171; font-size: 14px; }
+.rec-card { background: #fff; border-radius: 12px; margin: 12px; padding: 16px; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+.rec-item { padding: 10px 0; border-bottom: 1px solid #f0f0f0; }
+.rec-item:last-of-type { border-bottom: none; }
+.rec-item-title { font-size: 15px; font-weight: 600; color: #333; margin-bottom: 4px; }
+.rec-item-reason { font-size: 13px; color: #666; }
+.rec-occasion, .rec-tips { font-size: 13px; color: #555; margin-top: 10px; line-height: 1.5; }
+.rec-label { color: #FF8C94; font-weight: 600; }
+.rec-history-header { padding: 12px 12px 6px; font-size: 13px; color: #999; font-weight: 600; text-transform: uppercase; }
+.rec-empty { text-align: center; padding: 20px; color: #bbb; font-size: 14px; }
+.rec-history-item { background: #fff; margin: 0 12px 8px; border-radius: 8px; padding: 10px 12px; }
+.rec-history-context { font-size: 13px; color: #333; }
+.rec-history-time { font-size: 11px; color: #aaa; margin-top: 4px; }
