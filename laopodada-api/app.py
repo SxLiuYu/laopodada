@@ -172,6 +172,16 @@ def init_db() -> None:
             FOREIGN KEY(outfit_id) REFERENCES outfits(id)
         );
         CREATE INDEX IF NOT EXISTS idx_outfit_feedback_outfit ON outfit_feedback(outfit_id);
+
+        CREATE TABLE IF NOT EXISTS outfit_recommendations (
+            id              TEXT PRIMARY KEY,
+            session_id      TEXT,
+            context TEXT,
+            recommended_ids TEXT NOT NULL,
+            created_at      INTEGER NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS idx_recommendations_session ON outfit_recommendations(session_id);
+        CREATE INDEX IF NOT EXISTS idx_recommendations_created  ON outfit_recommendations(created_at DESC);
     """)
     db.commit()
     db.close()
@@ -925,6 +935,97 @@ def _notfound(e):
 @app.errorhandler(413)
 def _toolarge(e):
     return jsonify(error=f"文件超过 {MAX_UPLOAD_BYTES // (1024*1024)}MB 限制"), 413
+
+
+# ---------- Outfit recommendation (LLM-powered) ----------
+from recommend import OutfitRecommender
+
+
+@app.post("/api/v1/outfit/recommend")
+def llm_recommend_outfit():
+    """LLM-powered outfit recommendation using MiniMax M3."""
+    body = request.get_json(silent=True) or {}
+    context = (body.get("context") or "").strip() or "日常"
+    session_id = (body.get("session_id") or "").strip() or None
+
+    db = get_db()
+    rows = db.execute("SELECT * FROM wardrobe_items").fetchall()
+    wardrobe = [_row_to_wardrobe(r) for r in rows]
+
+    if not wardrobe:
+        abort(400, description="衣橱为空,无法推荐")
+
+    recommender = OutfitRecommender()
+    raw = recommender.recommend(wardrobe, context)
+
+    top_id = raw.get("top", {}).get("id")
+    bottom_id = raw.get("bottom", {}).get("id")
+    occasion = raw.get("occasion", context)
+    tips = raw.get("tips", "")
+
+    # Validate IDs exist in wardrobe
+    valid_ids = {r["id"] for r in rows}
+    if top_id and top_id not in valid_ids:
+        top_id = None
+    if bottom_id and bottom_id not in valid_ids:
+        bottom_id = None
+
+    recommended_ids = [x for x in [top_id, bottom_id] if x]
+
+    # Persist recommendation
+    rec_id = uuid.uuid4().hex[:16]
+    now = int(time.time())
+    db.execute(
+        "INSERT INTO outfit_recommendations (id, session_id, context, recommended_ids, created_at) "
+        "VALUES (?,?,?,?,?)",
+        (rec_id, session_id, context, json.dumps(recommended_ids), now),
+    )
+
+    return jsonify(
+        id=rec_id,
+        top={"id": top_id, "title": raw.get("top", {}).get("title"), "reason": raw.get("top", {}).get("reason")},
+        bottom={"id": bottom_id, "title": raw.get("bottom", {}).get("title"), "reason": raw.get("bottom", {}).get("reason")},
+        occasion=occasion,
+        tips=tips,
+    )
+
+
+@app.get("/api/v1/outfit/history")
+def list_recommendations():
+    """List past outfit recommendations for a session."""
+    session_id = request.args.get("session_id")
+    limit = max(1, min(int(request.args.get("limit", 20)), 100))
+
+    db = get_db()
+    if session_id:
+        rows = db.execute(
+            "SELECT * FROM outfit_recommendations WHERE session_id=? ORDER BY created_at DESC LIMIT ?",
+            (session_id, limit),
+        ).fetchall()
+    else:
+        rows = db.execute(
+            "SELECT * FROM outfit_recommendations ORDER BY created_at DESC LIMIT ?",
+            (limit,),
+        ).fetchall()
+
+    out = []
+    for r in rows:
+        try:
+            ids = json.loads(r["recommended_ids"])
+        except Exception:
+            ids = []
+        items = db.execute(
+            f"SELECT * FROM wardrobe_items WHERE id IN ({','.join('?'*len(ids))})", ids
+        ).fetchall() if ids else []
+        out.append({
+            "id": r["id"],
+            "session_id": r["session_id"],
+            "context": r["context"],
+            "items": [_row_to_wardrobe(x) for x in items],
+            "created_at": r["created_at"],
+            "created_at_iso": _ts_iso(r["created_at"]),
+        })
+    return jsonify(recommendations=out)
 
 
 # ---------- Bootstrap ----------
