@@ -26,6 +26,49 @@ function renderWardrobePage() {
   page.innerHTML = html;
 
   loadWardrobe();
+
+  // K3 模式: AI 浮动按钮(渐变 ✨)+ 拍照横条(黑色 📷)
+  if (typeof AIFab !== 'undefined') {
+    AIFab.init('wardrobe', () => {
+      AIFab.openSheet({
+        title: '✨ AI 穿搭推荐',
+        placeholder: '例如:今日约会,天气 25 度...',
+        onSubmit: async (text) => {
+          const resp = await api.generateOutfit(text);
+          const o = resp.outfit;
+          const itemsHtml = (o.items || []).map(it =>
+            `<img src="${it.url}" alt="${it.category}" style="width:60px;height:60px;object-fit:cover;margin:2px;">`
+          ).join('');
+          return {
+            html: `
+              <div><b>搭配:</b> ${escapeHtml(o.description || '')}</div>
+              <div style="margin-top:6px;">${itemsHtml}</div>
+              ${o.tips ? `<div style="margin-top:6px;color:#c44;">💡 ${escapeHtml(o.tips)}</div>` : ''}
+            `
+          };
+        }
+      });
+    });
+
+    AIFab.initPhotoBar('wardrobe', () => {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'image/*';
+      input.capture = 'environment';
+      input.onchange = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('category', wardrobeCategory || 'top');  // 默认 top,沿用当前过滤器
+        api.postItem(formData).then(() => {
+          toast('✓ 上传成功');
+          renderWardrobePage();
+        }).catch(err => toast('❌ 上传失败: ' + err.message));
+      };
+      input.click();
+    });
+  }
 }
 
 // 打开上传表单(bottom sheet 风格)

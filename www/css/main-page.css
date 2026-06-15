@@ -1,0 +1,64 @@
+/* www/css/main-page.css — 主页 3 卡片 + 底部 3 tab 样式 */
+
+.main-page { padding: 16px; min-height: calc(100vh - 80px); }
+.main-greet { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+.main-greet-sub { font-size: 13px; color: #999; margin-bottom: 20px; }
+
+.main-card {
+  display: flex;
+  align-items: center;
+  padding: 18px;
+  border-radius: 16px;
+  margin-bottom: 14px;
+  cursor: pointer;
+  transition: transform 0.15s;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 2px 6px rgba(0,0,0,.04);
+}
+.main-card:hover { transform: translateX(4px); }
+.main-card-wardrobe { background: linear-gradient(135deg, #fff5e6, #ffe0cc); }
+.main-card-recipe   { background: linear-gradient(135deg, #ffe6f0, #ffccdd); }
+.main-card-health   { background: linear-gradient(135deg, #e6f5ff, #cce5ff); }
+
+.main-card-icon { font-size: 36px; margin-right: 16px; flex-shrink: 0; }
+.main-card-body h4 { font-size: 16px; margin-bottom: 4px; font-weight: 700; color: #333; }
+.main-card-body p { font-size: 11px; color: #666; line-height: 1.4; margin-bottom: 6px; }
+.main-card-tag {
+  display: inline-block;
+  background: rgba(255, 255, 255, 0.85);
+  color: #c44;
+  font-size: 10px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-weight: 600;
+}
+
+/* ── 底部 3 tab(tabbar) ── */
+.tabbar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  background: #fff;
+  border-top: 1px solid #f0f0f0;
+  z-index: 50;
+  padding: 8px 4px;
+  padding-bottom: max(8px, env(safe-area-inset-bottom));
+}
+.tabbar .tab {
+  flex: 1;
+  text-align: center;
+  padding: 10px 0;
+  font-size: 13px;
+  cursor: pointer;
+  border-radius: 8px;
+  color: #999;
+  transition: all 0.15s;
+}
+.tabbar .tab.active {
+  background: linear-gradient(135deg, #ff7a45, #ff5e94);
+  color: #fff;
+  font-weight: 600;
+}

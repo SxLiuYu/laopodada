@@ -9,7 +9,10 @@ let chatHistory = [];  // [{role, content, ts}]
 function renderChatPage() {
   const page = document.getElementById('page-chat');
   page.innerHTML = `
-    <div class="page-header">🤖 AI 助手</div>
+    <div class="page-header" style="display:flex;align-items:center;gap:10px;">
+      <button class="chat-back-btn" onclick="switchTab('main')">← 主页</button>
+      <span style="flex:1;">🤖 AI 助手</span>
+    </div>
     <div class="chat-hint">基于 MiniMax M3 的中文 AI 助手 · 有问必答</div>
     <div class="chat-messages" id="chat-messages"></div>
     <div class="chat-quickbar">

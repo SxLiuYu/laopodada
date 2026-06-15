@@ -1,4 +1,4 @@
-/* app.js — 老婆哒哒 衣橱 App 入口 */
+/* app.js — 老婆哒哒 App 入口 */
 
 function toast(msg) {
   const el = document.getElementById('toast');
@@ -7,22 +7,32 @@ function toast(msg) {
   setTimeout(() => { el.style.display = 'none'; }, 2000);
 }
 
-function switchTab(tab) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  const btn = document.querySelector(`.tab-btn[data-tab="${tab}"]`);
-  const page = document.getElementById(`page-${tab}`);
-  if (btn) btn.classList.add('active');
-  if (page) {
-    page.classList.add('active');
-    if (tab === 'wardrobe' && !page.querySelector('.filter-bar')) renderWardrobePage();
-    if (tab === 'recipe' && !page.querySelector('.recipe-cat-bar')) renderRecipePage();
-    if (tab === 'health' && !page.querySelector('#health-cat-bar')) renderHealthPage();
-    if (tab === 'chat' && !page.querySelector('#chat-messages')) renderChatPage();
-    if (tab === 'profile' && !page.querySelector('.profile-stats')) renderProfilePage();
+function switchTab(tabKey) {
+  // 隐藏所有 page
+  document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
+  // 显示目标 page
+  const target = document.getElementById(`page-${tabKey}`);
+  if (target) {
+    target.style.display = 'block';
+    // 触发对应 render
+    if (tabKey === 'main') renderMainPage();
+    else if (tabKey === 'wardrobe') renderWardrobePage();
+    else if (tabKey === 'recipe') renderRecipePage();
+    else if (tabKey === 'health') renderHealthPage();
+    else if (tabKey === 'chat') renderChatPage();
+    else if (tabKey === 'profile') renderProfilePage();
   }
+  // tab 样式
+  document.querySelectorAll('.tabbar .tab').forEach(t => t.classList.remove('active'));
+  const activeTab = document.querySelector(`.tabbar .tab[data-tab="${tabKey}"]`);
+  if (activeTab) activeTab.classList.add('active');
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  switchTab('wardrobe');
+  // tab 点击
+  document.querySelectorAll('.tabbar .tab').forEach(tab => {
+    tab.onclick = () => switchTab(tab.dataset.tab);
+  });
+  // 默认进主页
+  switchTab('main');
 });

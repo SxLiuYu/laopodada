@@ -1,0 +1,112 @@
+/* www/css/ai-fab.css — AI 浮动按钮 + 拍照横条 + 底部 sheet */
+
+/* ── AI 渐变 FAB(右下悬浮 56x56) ── */
+.ai-fab {
+  position: fixed;
+  bottom: 76px;
+  right: 16px;
+  width: 56px;
+  height: 56px;
+  border-radius: 28px;
+  background: linear-gradient(135deg, #ff7a45, #ff5e94);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  box-shadow: 0 4px 12px rgba(255, 90, 100, 0.4);
+  cursor: pointer;
+  z-index: 100;
+  border: none;
+  transition: transform 0.15s;
+}
+.ai-fab:hover { transform: scale(1.08); }
+.ai-fab:active { transform: scale(0.95); }
+
+/* ── 衣橱拍照横条(左下,黑色,避让 FAB 88px) ── */
+.ai-fab-photo-bar {
+  position: fixed;
+  bottom: 76px;
+  left: 16px;
+  right: 88px;
+  background: #1a1a1a;
+  color: #fff;
+  padding: 14px 20px;
+  border-radius: 28px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  z-index: 99;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+.ai-fab-photo-bar:hover { background: #2a2a2a; }
+
+/* ── AI 底部 sheet 弹窗(底部弹起,圆角 16) ── */
+.ai-sheet-mask {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 200;
+  display: none;
+  align-items: flex-end;
+}
+.ai-sheet-mask.open { display: flex; }
+.ai-sheet {
+  background: #fff;
+  width: 100%;
+  max-height: 70vh;
+  border-radius: 16px 16px 0 0;
+  padding: 16px;
+  overflow-y: auto;
+}
+.ai-sheet h3 { font-size: 16px; margin-bottom: 12px; color: #ff7a45; }
+.ai-sheet textarea {
+  width: 100%;
+  min-height: 80px;
+  padding: 10px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 14px;
+  resize: vertical;
+  font-family: inherit;
+}
+.ai-sheet .ai-submit {
+  width: 100%;
+  padding: 12px;
+  background: linear-gradient(135deg, #ff7a45, #ff5e94);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  margin-top: 12px;
+  cursor: pointer;
+}
+.ai-sheet .ai-submit:disabled { background: #ccc; cursor: not-allowed; }
+.ai-sheet .ai-result {
+  margin-top: 12px;
+  padding: 12px;
+  background: #fafafa;
+  border-radius: 8px;
+  font-size: 13px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+.ai-sheet .ai-result img {
+  max-width: 100%;
+  border-radius: 8px;
+  margin: 4px 0;
+}
+
+/* ── Chat 返回主页按钮(对话 tab 顶部) ── */
+.chat-back-btn {
+  background: #f5f5f5;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 18px;
+  font-size: 13px;
+  cursor: pointer;
+  margin: 8px;
+}
+.chat-back-btn:active { background: #e0e0e0; }

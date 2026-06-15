@@ -81,6 +81,29 @@ function renderHealthPage() {
   };
 
   loadHealthArticles();
+
+  // AI 浮动按钮(渐变 ✨ 单按钮,无拍照)
+  if (typeof AIFab !== 'undefined') {
+    AIFab.init('health', () => {
+      AIFab.openSheet({
+        title: '✨ AI 健康科普',
+        placeholder: '例如:维生素 D 怎么补?孕期要注意什么?',
+        onSubmit: async (text) => {
+          const resp = await api.generateHealthArticle(text);
+          const a = resp.article;
+          const tags = (a.tags || []).map(t => `#${t}`).join(' ');
+          return {
+            html: `
+              <div><b>${escapeHtml(a.title || '新文章')}</b> ${tags ? escapeHtml(tags) : ''}</div>
+              <div style="margin-top:6px;color:#555;">${escapeHtml(a.summary || '')}</div>
+              <div style="margin-top:6px;line-height:1.7;white-space:pre-wrap;">${escapeHtml(a.content || '')}</div>
+              ${a.source ? `<div style="margin-top:6px;color:#888;font-size:11px;">📚 ${escapeHtml(a.source)} · ⏱ ${a.read_minutes || 5} 分钟</div>` : ''}
+            `
+          };
+        }
+      });
+    });
+  }
 }
 
 function renderHealthCatBar() {

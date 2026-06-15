@@ -95,6 +95,20 @@ async function feedbackOutfit(id, score) {
   return res.json();
 }
 
+// v10: AI 穿搭推荐(后端 atlas M2.7,响应 {outfit: {items, description, tips}})
+async function generateOutfit(occasion) {
+  const res = await fetch(`${window.API_BASE}/api/v1/outfits/generate`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ occasion: occasion || 'casual' }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || `HTTP ${res.status}`);
+  }
+  return res.json();
+}
+
 async function listOutfits(limit = 20) {
   const res = await fetch(`${window.API_BASE}/api/v1/outfits?limit=${limit}`);
   if (!res.ok) throw new Error('list outfits failed');
@@ -204,3 +218,17 @@ async function generateHealthArticle(topic, category = '') {
   }
   return data;
 }
+
+// ===== window.api 命名空间(供 v10 主页/衣橱/菜谱/健康模块统一调用) =====
+window.api = {
+  // 衣橱
+  postItem, listItems, getItem, deleteItem,
+  // 穿搭
+  recommendOutfit, generateOutfit, getOutfit, feedbackOutfit, listOutfits,
+  // 菜谱
+  listRecipes, getRecipe, createRecipe, deleteRecipe, generateRecipe,
+  // 健康
+  listHealthArticles, getHealthArticle, generateHealthArticle,
+  // 对话
+  chatWithAI, getChatHistory,
+};

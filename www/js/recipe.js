@@ -98,6 +98,30 @@ function renderRecipePage() {
   };
 
   loadRecipes();
+
+  // AI 浮动按钮(渐变 ✨ 单按钮,无拍照)
+  if (typeof AIFab !== 'undefined') {
+    AIFab.init('recipe', () => {
+      AIFab.openSheet({
+        title: '✨ AI 菜品推荐',
+        placeholder: '例如:今天想吃川菜,不要太辣,30 分钟内...',
+        onSubmit: async (text) => {
+          const resp = await api.generateRecipe(text);
+          const r = resp.recipe;
+          const ingredients = (r.ingredients || []).join('、');
+          const steps = (r.steps || []).map((s, i) => `${i+1}. ${s}`).join('\n');
+          return {
+            html: `
+              <div><b>${escapeHtml(r.title || '新菜')}</b> (${catLabel(r.category)} · ${diffLabel(r.difficulty)} · ${(r.prep_minutes || 0) + (r.cook_minutes || 0)} 分钟)</div>
+              <div style="margin-top:6px;"><b>食材:</b> ${escapeHtml(ingredients)}</div>
+              <div style="margin-top:6px;"><b>步骤:</b>\n${escapeHtml(steps)}</div>
+              ${r.note ? `<div style="margin-top:6px;color:#c44;">💡 ${escapeHtml(r.note)}</div>` : ''}
+            `
+          };
+        }
+      });
+    });
+  }
 }
 
 async function loadRecipes() {
