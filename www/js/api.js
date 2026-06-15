@@ -147,19 +147,21 @@ async function getHealthArticle(id) {
   return res.json();
 }
 
-// ===== AI 咨询(atlas 18793) =====
+// ===== AI 咨询(走 nginx 8088 反代到 atlas 18793) =====
 async function chatWithAI(message, sessionId) {
-  const res = await fetch('https://123.57.107.21:18793/api/chat', {
+  const res = await fetch(`${window.API_BASE}/api/chat`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ message, session_id: sessionId }),
   });
-  if (!res.ok) throw new Error('AI chat failed');
-  return res.json();
+  if (!res.ok) throw new Error(`AI chat failed: HTTP ${res.status}`);
+  const data = await res.json();
+  // atlas 返 {response, session_id}, 前端用 resp.reply 兜底兼容
+  return { reply: data.response || data.reply || data.content || data.message || '(无回复)' };
 }
 async function getChatHistory(sessionId, limit = 50) {
-  const res = await fetch(`https://123.57.107.21:18793/api/chat/history?session_id=${encodeURIComponent(sessionId)}&limit=${limit}`);
-  if (!res.ok) throw new Error('history failed');
+  const res = await fetch(`${window.API_BASE}/api/chat/history?session_id=${encodeURIComponent(sessionId)}&limit=${limit}`);
+  if (!res.ok) throw new Error(`history failed: HTTP ${res.status}`);
   return res.json();
 }
 
