@@ -1732,6 +1732,10 @@ def generate_health_article():
 # ---------- Bootstrap ----------
 init_db()
 
+# v10 outfit generation endpoint (AI-powered, atlas M2.7)
+import outfits  # noqa: E402
+app.register_blueprint(outfits.bp)
+
 if __name__ == "__main__":
     import os as _os
     _port = int(_os.environ.get("LAOPODADA_API_PORT", "8097"))
