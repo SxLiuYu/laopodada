@@ -3,21 +3,23 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>老婆哒哒 · 衣橱</title>
+  <title>老婆哒哒</title>
   <link rel="stylesheet" href="css/app.css">
 </head>
 <body>
 <div id="app">
   <div id="page-wardrobe"  class="page"></div>
-  <div id="page-camera"    class="page"></div>
-  <div id="page-recommend" class="page"></div>
+  <div id="page-recipe"    class="page"></div>
+  <div id="page-health"    class="page"></div>
+  <div id="page-chat"      class="page"></div>
   <div id="page-profile"   class="page"></div>
 
   <nav class="tab-bar">
-    <button class="tab-btn active" data-tab="wardrobe"   onclick="switchTab('wardrobe')"><span class="icon">👗</span>衣橱</button>
-    <button class="tab-btn"        data-tab="camera"     onclick="switchTab('camera')"><span class="icon">📷</span>拍照</button>
-    <button class="tab-btn"        data-tab="recommend"  onclick="switchTab('recommend')"><span class="icon">✨</span>推荐</button>
-    <button class="tab-btn"        data-tab="profile"    onclick="switchTab('profile')"><span class="icon">👤</span>我的</button>
+    <button class="tab-btn active" data-tab="wardrobe"   onclick="switchTab('wardrobe')"><span class="icon">👗</span><span class="label">衣橱</span></button>
+    <button class="tab-btn"        data-tab="recipe"     onclick="switchTab('recipe')"><span class="icon">🍱</span><span class="label">点餐</span></button>
+    <button class="tab-btn"        data-tab="health"     onclick="switchTab('health')"><span class="icon">📚</span><span class="label">健康</span></button>
+    <button class="tab-btn"        data-tab="chat"       onclick="switchTab('chat')"><span class="icon">🤖</span><span class="label">AI</span></button>
+    <button class="tab-btn"        data-tab="profile"    onclick="switchTab('profile')"><span class="icon">👤</span><span class="label">我的</span></button>
   </nav>
 
   <div id="toast"></div>
@@ -25,8 +27,9 @@
 <script src="js/config.js"></script>
 <script src="js/api.js"></script>
 <script src="js/wardrobe.js"></script>
-<script src="js/camera.js"></script>
-<script src="js/recommend.js"></script>
+<script src="js/recipe.js"></script>
+<script src="js/health.js"></script>
+<script src="js/chat.js"></script>
 <script src="js/profile.js"></script>
 <script src="js/app.js"></script>
 </body>

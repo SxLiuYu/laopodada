@@ -16,8 +16,9 @@ function switchTab(tab) {
   if (page) {
     page.classList.add('active');
     if (tab === 'wardrobe' && !page.querySelector('.filter-bar')) renderWardrobePage();
-    if (tab === 'camera') renderCameraPage();
-    if (tab === 'recommend' && !page.querySelector('.occasion-grid')) renderRecommendPage();
+    if (tab === 'recipe' && !page.querySelector('.recipe-cat-bar')) renderRecipePage();
+    if (tab === 'health' && !page.querySelector('#health-cat-bar')) renderHealthPage();
+    if (tab === 'chat' && !page.querySelector('#chat-messages')) renderChatPage();
     if (tab === 'profile' && !page.querySelector('.profile-stats')) renderProfilePage();
   }
 }

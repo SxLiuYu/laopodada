@@ -100,3 +100,65 @@ async function listOutfits(limit = 20) {
   if (!res.ok) throw new Error('list outfits failed');
   return res.json();
 }
+
+// ===== 菜谱 =====
+async function listRecipes(category, difficulty, tag, limit = 50) {
+  const params = new URLSearchParams();
+  if (category) params.set('category', category);
+  if (difficulty) params.set('difficulty', difficulty);
+  if (tag) params.set('tag', tag);
+  params.set('limit', String(limit));
+  const res = await fetch(`${window.API_BASE}/api/v1/recipes?` + params.toString());
+  if (!res.ok) throw new Error('list recipes failed');
+  return res.json();
+}
+async function getRecipe(id) {
+  const res = await fetch(`${window.API_BASE}/api/v1/recipes/${id}`);
+  if (!res.ok) throw new Error('get recipe failed');
+  return res.json();
+}
+async function createRecipe(data) {
+  const res = await fetch(`${window.API_BASE}/api/v1/recipes`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error('create recipe failed');
+  return res.json();
+}
+async function deleteRecipe(id) {
+  const res = await fetch(`${window.API_BASE}/api/v1/recipes/${id}`, { method: 'DELETE' });
+  if (!res.ok) throw new Error('delete recipe failed');
+  return res.json();
+}
+
+// ===== 健康科普 =====
+async function listHealthArticles(category, limit = 50) {
+  const params = new URLSearchParams();
+  if (category) params.set('category', category);
+  params.set('limit', String(limit));
+  const res = await fetch(`${window.API_BASE}/api/v1/health/articles?` + params.toString());
+  if (!res.ok) throw new Error('list articles failed');
+  return res.json();
+}
+async function getHealthArticle(id) {
+  const res = await fetch(`${window.API_BASE}/api/v1/health/articles/${id}`);
+  if (!res.ok) throw new Error('get article failed');
+  return res.json();
+}
+
+// ===== AI 咨询(atlas 18793) =====
+async function chatWithAI(message, sessionId) {
+  const res = await fetch('https://123.57.107.21:18793/api/chat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ message, session_id: sessionId }),
+  });
+  if (!res.ok) throw new Error('AI chat failed');
+  return res.json();
+}
+async function getChatHistory(sessionId, limit = 50) {
+  const res = await fetch(`https://123.57.107.21:18793/api/chat/history?session_id=${encodeURIComponent(sessionId)}&limit=${limit}`);
+  if (!res.ok) throw new Error('history failed');
+  return res.json();
+}

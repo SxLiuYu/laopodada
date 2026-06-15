@@ -1,102 +1,140 @@
-/* recommend.js — 穿搭推荐页 */
+/* recommend.js - 穿搭推荐页 (LLM-powered, context-based) */
 
-let recommendSeason = '';
-let recommendWeather = {};
-let recommendOccasion = null;
+(function () {
+  var _sessionId = localStorage.getItem('laopodada_outfit_session') || (function () {
+    var id = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+      var r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+      return v.toString(16);
+    });
+    localStorage.setItem('laopodada_outfit_session', id);
+    return id;
+  })();
 
-function renderRecommendPage() {
-  const page = document.getElementById('page-recommend');
-  page.classList.add('active');
-  page.innerHTML = `
-    <div class="page-header">穿搭推荐</div>
-    <div class="weather-row">
-      <span class="weather-label">季节</span>
-      <select id="r-season" onchange="recommendSeason=this.value">
-        <option value="">不限</option>
-        <option value="spring">春</option>
-        <option value="summer">夏</option>
-        <option value="fall">秋</option>
-        <option value="winter">冬</option>
-      </select>
-      <span class="weather-label">温度</span>
-      <input type="number" id="r-temp" placeholder="°C" onchange="recommendWeather.temp_c=parseFloat(this.value)||undefined">
-      <span class="weather-label">天气</span>
-      <select id="r-condition" onchange="recommendWeather.condition=this.value">
-        <option value="">不限</option>
-        <option value="sunny">晴</option>
-        <option value="cloudy">多云</option>
-        <option value="rainy">雨</option>
-        <option value="snowy">雪</option>
-      </select>
-    </div>
-    <div class="occasion-grid" id="occasion-grid">
-      <button class="oc-btn casual" onclick="doRecommend('casual')">👟&nbsp;休闲</button>
-      <button class="oc-btn work" onclick="doRecommend('work')">💼&nbsp;上班</button>
-      <button class="oc-btn date" onclick="doRecommend('date')">💕&nbsp;约会</button>
-      <button class="oc-btn party" onclick="doRecommend('party')">🎉&nbsp;派对</button>
-    </div>
-    <div id="outfit-results"></div>
-  `;
-}
+  function getSessionId() {
+    return localStorage.getItem('laopodada_outfit_session') || _sessionId;
+  }
 
-async function doRecommend(occasion) {
-  recommendOccasion = occasion;
-  recommendWeather.temp_c = parseFloat(document.getElementById('r-temp').value) || undefined;
-  recommendWeather.condition = document.getElementById('r-condition').value || undefined;
-  const results = document.getElementById('outfit-results');
-  results.innerHTML = `<div class="empty-state" style="padding:20px;"><span class="emoji">✨</span>正在为你搭配…</div>`;
+  function setSessionId(id) {
+    localStorage.setItem('laopodada_outfit_session', id);
+    _sessionId = id;
+  }
 
-  try {
-    const before = Math.floor(Date.now() / 1000);
-    const data = await recommendOutfit(occasion, recommendSeason || undefined, recommendWeather, 3);
-    const outfits = data.outfits || [];
-    if (!outfits.length) {
-      results.innerHTML = `<div class="empty-state"><span class="emoji">😅</span>衣橱里没有足够的衣服<br>来搭配这个场合，先去添加几件吧～</div>`;
+  /* ── page render ── */
+  function renderRecommendPage() {
+    var page = document.getElementById('page-recommend');
+    page.classList.add('active');
+    page.innerHTML =
+      '<div class="page-header">穿搭推荐</div>' +
+      '<div class="rec-input-area">' +
+        '<input id="r-context" class="rec-text-input" type="text" placeholder="今天的场景是...?" maxlength="200" />' +
+        '<button class="rec-btn-generate" onclick="RecDoRecommend()">生成推荐</button>' +
+      '</div>' +
+      '<div id="rec-loading" class="rec-loading" style="display:none"><span class="emoji">✨</span> 正在为你搭配&hellip;</div>' +
+      '<div id="rec-error" class="rec-error" style="display:none"></div>' +
+      '<div id="rec-result"></div>' +
+      '<div class="rec-history-header">最近推荐</div>' +
+      '<div id="rec-history"><div class="rec-empty">加载中&hellip;</div></div>';
+    loadHistory();
+  }
+
+  /* ── fetch wardrobe items (for thumbnails) ── */
+  function getItemThumb(itemId, itemsMap) {
+    var item = itemsMap[itemId];
+    if (!item) return 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect fill="%23f0f0f0" width="64" height="64"/><text x="32" y="36" text-anchor="middle" fill="%23ccc" font-size="20">👗</text></svg>';
+    return item.thumb_url || item.list_url || '';
+  }
+
+  /* ── main recommend flow ── */
+  window.RecDoRecommend = async function () {
+    var input = document.getElementById('r-context');
+    var context = (input && input.value.trim()) ? input.value.trim() : null;
+    if (!context) {
+      toast('请输入场景描述'); return;
+    }
+
+    document.getElementById('rec-loading').style.display = '';
+    document.getElementById('rec-error').style.display = 'none';
+    document.getElementById('rec-result').innerHTML = '';
+
+    try {
+      /* 1. fetch wardrobe items for thumbnail lookup */
+      var itemsData = await listItems('all', 50);
+      var itemsMap = {};
+      (itemsData.items || []).forEach(function (it) { itemsMap[it.id] = it; });
+
+      /* 2. call recommend endpoint */
+      var data = await fetch(window.API_BASE + '/api/v1/outfit/recommend', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ context: context }),
+      }).then(function (r) { return r.json(); });
+
+      document.getElementById('rec-loading').style.display = 'none';
+      renderOutfit(data, itemsMap);
+      loadHistory(); /* refresh history */
+    } catch (e) {
+      document.getElementById('rec-loading').style.display = 'none';
+      document.getElementById('rec-error').style.display = '';
+      document.getElementById('rec-error').innerHTML = '<span class="emoji">⚠️</span> ' + e.message;
+    }
+  };
+
+  function renderOutfit(data, itemsMap) {
+    var container = document.getElementById('rec-result');
+    if (!data || !data.top_item_id && !data.bottom_item_id) {
+      container.innerHTML = '<div class="rec-empty"><span class="emoji">😅</span> 衣橱里没有足够的衣服<br>来搭配这个场合，先去添加几件吧～</div>';
       return;
     }
 
-    // Fetch ids for the outfits just created
-    outfitIdMap = {};
-    const recent = await listOutfits(outfits.length);
-    const recentFiltered = (recent.outfits || []).filter(o => o.created_at >= before);
-    recentFiltered.forEach((o, i) => { outfitIdMap[i] = o.id; });
+    var topItem = itemsMap[data.top_item_id];
+    var bottomItem = itemsMap[data.bottom_item_id];
 
-    results.innerHTML = outfits.map((o, i) => `
-      <div class="outfit-card" id="outfit-${i}">
-        <div class="outfit-items">
-          ${(o.items || []).map(item => `
-            <img class="outfit-item-thumb" src="${item.thumb_url || item.list_url || ''}" alt="${item.title || item.category}"
-                 onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22><rect fill=%22%23f0f0f0%22 width=%2264%22 height=%2264%22/><text x=%2232%22 y=%2236%22 text-anchor=%22middle%22 fill=%22%23ccc%22 font-size=%2220%22>👗</text></svg>'">`).join('')}
-        </div>
-        <div class="outfit-reason">${o.reason || ''} ${o.llm_note ? '<br><small style="color:#999">'+o.llm_note+'</small>' : ''}</div>
-        <div class="outfit-score">
-          <span class="score-label">时尚分</span>
-          <div class="score-bar"><div class="score-fill" style="width:${Math.round((o.style_score||0)*100)}%"></div></div>
-          <span class="score-label">${Math.round((o.style_score||0)*100)}分</span>
-        </div>
-        <div class="outfit-actions">
-          <button class="btn-like" onclick="sendFeedback(${i}, 1)">👍 推荐</button>
-          <button class="btn-dislike" onclick="sendFeedback(${i}, -1)">👎 不喜欢</button>
-        </div>
-      </div>`).join('');
-  } catch(e) {
-    results.innerHTML = `<div class="empty-state"><span class="emoji">⚠️</span>推荐失败：${e.message}</div>`;
-  }
-}
-
-// outfit ids indexed by card position
-let outfitIdMap = {};
-
-async function sendFeedback(idx, score) {
-  const outfitId = outfitIdMap[idx];
-  if (!outfitId) { toast('无效的 outfit'); return; }
-  try {
-    await feedbackOutfit(outfitId, score);
-    const card = document.getElementById(`outfit-${idx}`);
-    if (card) {
-      card.querySelector('.outfit-actions').innerHTML =
-        `<span style="color:#2E9E7D;font-size:13px;">已反馈 ${score > 0 ? '👍' : '👎'}，感谢～</span>`;
+    var html = '<div class="rec-card">';
+    if (topItem) {
+      html += '<div class="rec-item">' +
+        '<img class="rec-thumb" src="' + (topItem.thumb_url || '') + '" alt="上装" onerror="this.src=\'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22><rect fill=%22%23f0f0f0%22 width=%2264%22 height=%2264%22/><text x=%2232%22 y=%2236%22 text-anchor=%22middle%22 fill=%22%23ccc%22 font-size=%2220%22>👕</text></svg>\'" />' +
+        '<div class="rec-item-label">上装</div></div>';
     }
-    toast('反馈已记录 ✨');
-  } catch(e) { toast('反馈失败'); }
-}
+    if (bottomItem) {
+      html += '<div class="rec-item">' +
+        '<img class="rec-thumb" src="' + (bottomItem.thumb_url || '') + '" alt="下装" onerror="this.src=\'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22><rect fill=%22%23f0f0f0%22 width=%2264%22 height=%2264%22/><text x=%2232%22 y=%2236%22 text-anchor=%22middle%22 fill=%22%23ccc%22 font-size=%2220%22>👖</text></svg>\'" />' +
+        '<div class="rec-item-label">下装</div></div>';
+    }
+    html += '<div class="rec-occasion">' + (data.occasion || '') + '</div>';
+    html += '<div class="rec-tips">' + (data.tips || '') + '</div>';
+    html += '</div>';
+    container.innerHTML = html;
+  }
+
+  /* ── history ── */
+  async function loadHistory() {
+    var sid = getSessionId();
+    var box = document.getElementById('rec-history');
+    if (!box) return;
+    try {
+      var data = await fetch(window.API_BASE + '/api/v1/outfit/history?session_id=' + encodeURIComponent(sid))
+        .then(function (r) { return r.json(); });
+      var items = data.history || [];
+      if (!items.length) {
+        box.innerHTML = '<div class="rec-empty">暂无推荐记录</div>';
+        return;
+      }
+      box.innerHTML = items.slice(0, 5).map(function (h) {
+        return '<div class="rec-history-item">' +
+          '<div class="rec-history-context">' + escHtml(h.context || '') + '</div>' +
+          '<div class="rec-history-occasion">' + escHtml(h.occasion || '') + '</div>' +
+          '<div class="rec-history-time">' + (h.created_at ? new Date(h.created_at * 1000).toLocaleString() : '') + '</div>' +
+        '</div>';
+      }).join('');
+    } catch (e) {
+      box.innerHTML = '<div class="rec-empty">加载历史失败</div>';
+    }
+  }
+
+  function escHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  /* ── expose for tab switch ── */
+  window.renderRecommendPage = renderRecommendPage;
+})();
