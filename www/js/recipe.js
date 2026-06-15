@@ -24,6 +24,12 @@ function renderRecipePage() {
   page.classList.add('active');
   page.innerHTML = `
     <div class="page-header">🍳 菜谱</div>
+    <div class="ai-gen-bar">
+      <input id="recipe-ai-input" type="text" placeholder="想吃啥?输入菜名或场景(例:西红柿炒蛋 / 简单快手晚饭)" maxlength="100">
+      <button id="recipe-ai-btn" class="ai-btn">✨ AI 生成</button>
+    </div>
+    <p class="ai-hint">💡 LLM 需 60-90 秒,内容基于中国菜谱常识,已校验食材量与步骤合理性</p>
+    <div id="recipe-ai-result" class="ai-result hidden"></div>
     <div class="filter-bar" id="recipe-cat-bar"></div>
     <div class="filter-bar" id="recipe-diff-bar" style="padding-top:0;"></div>
     <div style="padding:8px 12px;display:flex;gap:8px;align-items:center;">
@@ -47,6 +53,49 @@ function renderRecipePage() {
     <button class="filter-chip${recipeFilter.difficulty === d.key ? ' active' : ''}"
       data-diff="${d.key}" onclick="setRecipeDifficulty('${d.key}')">${d.label}</button>
   `).join('');
+
+  // AI 生成按钮
+  document.getElementById('recipe-ai-btn').onclick = async () => {
+    const input = document.getElementById('recipe-ai-input');
+    const query = input.value.trim();
+    if (!query) {
+      alert('请输入菜名或场景');
+      return;
+    }
+    const btn = document.getElementById('recipe-ai-btn');
+    const resultBox = document.getElementById('recipe-ai-result');
+    btn.disabled = true;
+    btn.textContent = 'AI 在想菜谱... 60-90s';
+    resultBox.classList.remove('hidden');
+    resultBox.innerHTML = '<div class="ai-loading">🤔 AI 思考中,请耐心等待(约 60-90 秒)...</div>';
+
+    try {
+      const data = await generateRecipe(query);
+      const recipe = data.recipe;
+      resultBox.innerHTML = `
+        <div class="ai-result-card">
+          <div class="ai-result-header">
+            <h3>✨ ${escapeHtml(recipe.title)}</h3>
+            <span class="ai-tag">AI 生成</span>
+          </div>
+          <p><strong>${catLabel(recipe.category)} · ${diffLabel(recipe.difficulty)} · ${(recipe.prep_minutes || 0) + (recipe.cook_minutes || 0)} 分钟 · ${recipe.servings || 1} 人份</strong></p>
+          <h4>食材</h4>
+          <ul>${(recipe.ingredients || []).map(x => `<li>${escapeHtml(x)}</li>`).join('')}</ul>
+          <h4>步骤</h4>
+          <ol>${(recipe.steps || []).map(x => `<li>${escapeHtml(x)}</li>`).join('')}</ol>
+          ${recipe.note ? `<p class="ai-note">💡 ${escapeHtml(recipe.note)}</p>` : ''}
+          <p class="ai-source">由 AI 现做,基于真实中国家常菜常识</p>
+        </div>
+      `;
+      prependRecipeToList(recipe);
+      input.value = '';
+    } catch (e) {
+      resultBox.innerHTML = `<div class="ai-error">❌ ${escapeHtml(e.message)}</div>`;
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '✨ AI 生成';
+    }
+  };
 
   loadRecipes();
 }
@@ -87,6 +136,33 @@ function catLabel(cat) {
 }
 function diffLabel(d) {
   return { easy:'简单', medium:'中等', hard:'困难' }[d] || d || '';
+}
+
+function escapeHtml(s) {
+  return String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
+}
+
+function prependRecipeToList(recipe) {
+  const grid = document.getElementById('recipe-grid');
+  // 移除 empty state
+  const empty = grid.querySelector('.empty-state');
+  if (empty) empty.remove();
+  const card = document.createElement('div');
+  card.className = 'item-card ai-card';
+  card.onclick = () => showRecipeDetail(recipe.id);
+  card.innerHTML = `
+    <img src="${recipe.cover_url || 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect fill=%22%23f0f0f0%22 width=%22100%22 height=%22100%22/><text x=%2250%22 y=%2255%22 text-anchor=%22middle%22 fill=%22%23ccc%22 font-size=%2240%22>🍳</text></svg>'}"
+      alt="${escapeHtml(recipe.title)}" style="width:100%;aspect-ratio:1;object-fit:cover;border:2px solid #a855f7;"
+      onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect fill=%22%23f0f0f0%22 width=%22100%22 height=%22100%22/><text x=%2250%22 y=%2255%22 text-anchor=%22middle%22 fill=%22%23ccc%22 font-size=%2240%22>🍳</text></svg>'">
+    <div class="item-meta">
+      <div class="item-title">✨ ${escapeHtml(recipe.title)} <span class="ai-tag" style="font-size:10px;padding:1px 4px;">AI</span></div>
+      <div class="item-badges">
+        <span class="badge badge-cat">${catLabel(recipe.category)}</span>
+        <span class="badge" style="background:#FFF3E0;color:#E67E22;">${diffLabel(recipe.difficulty)}</span>
+      </div>
+    </div>
+  `;
+  grid.insertBefore(card, grid.firstChild);
 }
 
 function setRecipeCategory(cat) {

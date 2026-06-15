@@ -162,3 +162,43 @@ async function getChatHistory(sessionId, limit = 50) {
   if (!res.ok) throw new Error('history failed');
   return res.json();
 }
+
+// ===== AI 生成 =====
+/**
+ * AI 生成菜谱
+ * @param {string} query - 菜名或场景(如"西红柿炒蛋"或"简单快手晚饭")
+ * @returns {Promise<{recipe: object}>} - 生成的菜谱对象(已存 DB)
+ */
+async function generateRecipe(query) {
+  const res = await fetch(`${window.API_BASE}/api/v1/recipes/generate`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ query }),
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.error || `生成失败: HTTP ${res.status}`);
+  }
+  return data;
+}
+
+/**
+ * AI 生成健康文章
+ * @param {string} topic - 主题(如"维生素 D 补充")
+ * @param {string} [category] - nutrition/exercise/disease/prevention/mental/female
+ * @returns {Promise<{article: object}>} - 生成的文章对象
+ */
+async function generateHealthArticle(topic, category = '') {
+  const body = { topic };
+  if (category) body.category = category;
+  const res = await fetch(`${window.API_BASE}/api/v1/health/articles/generate`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.error || `生成失败: HTTP ${res.status}`);
+  }
+  return data;
+}

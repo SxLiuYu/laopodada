@@ -5,13 +5,14 @@ Run via gunicorn -c gunicorn.conf.py app:app
 """
 import io
 import json
+import llm
 import os
 import sqlite3
 import time
 import urllib.request
 import uuid
 from datetime import datetime, timezone
-from typing import Any
+from typing import Any, Optional
 
 from flask import Flask, abort, g, jsonify, request, send_from_directory
 from PIL import Image
@@ -1564,6 +1565,168 @@ def list_recommendations():
             "created_at_iso": _ts_iso(r["created_at"]),
         })
     return jsonify(recommendations=out)
+
+
+# ---------- AI Generate: Recipes ----------
+RECIPE_GENERATION_SYSTEM = """你是一位资深的中华料理厨师,精通家常菜 1000+ 道。**严格遵守以下规则**:
+1. **只输出真实存在的菜谱**,不能编造。模糊地名的菜(如"xx 家常菜")不要造,挑真实有名的。
+2. **食材用量基于真实烹饪常识**(一人份 ~ 鸡蛋 1-2 个,肉 100-200g,蔬菜 200-300g)。
+3. **步骤 3-8 步**,每步清晰可执行。
+4. **配料**数组,每项 5-15 字(如"鸡蛋 2 个"、"西红柿 1 个(约 200g)")。
+5. **难度**只能是 easy / medium / hard。
+6. **prep_minutes + cook_minutes <= 90**,否则返工。
+7. **必须返回纯 JSON**,不要 markdown,不要解释。JSON 字段:
+   title, category (breakfast/lunch/dinner/dessert/drink), difficulty,
+   prep_minutes, cook_minutes, servings (1-6),
+   ingredients (str[]), steps (str[]), tags (str[]), note
+"""
+
+
+def _validate_recipe_gen(r: dict) -> Optional[str]:
+    """Return error message if invalid, None if OK."""
+    if not isinstance(r, dict):
+        return "不是 JSON 对象"
+    for f in ["title", "category", "difficulty", "prep_minutes", "cook_minutes", "ingredients", "steps"]:
+        if f not in r:
+            return f"缺少字段 {f}"
+    if r["category"] not in {"breakfast", "lunch", "dinner", "dessert", "drink"}:
+        return f"非法 category: {r['category']}"
+    if r["difficulty"] not in {"easy", "medium", "hard"}:
+        return f"非法 difficulty: {r['difficulty']}"
+    if not isinstance(r["ingredients"], list) or len(r["ingredients"]) < 2:
+        return "ingredients 至少 2 项"
+    if not isinstance(r["steps"], list) or len(r["steps"]) < 2:
+        return "steps 至少 2 步"
+    if r["prep_minutes"] + r["cook_minutes"] > 90:
+        return f"总时间 {r['prep_minutes']+r['cook_minutes']} 分钟超过 90 上限"
+    return None
+
+
+@app.post("/api/v1/recipes/generate")
+def generate_recipe():
+    """AI generate a real Chinese recipe from a dish name or scenario query."""
+    body = request.get_json(silent=True) or {}
+    query = (body.get("query") or "").strip()
+    if not query:
+        abort(400, description="query 必填 (菜名或场景,如 '西红柿炒蛋' 或 '简单快手晚饭')")
+    if len(query) > 100:
+        abort(400, description="query 太长 (<=100 字)")
+
+    user_msg = f"{RECIPE_GENERATION_SYSTEM}\n\n请生成这道菜: {query}\n只返回 JSON,不要其他文字。"
+    last_err = None
+    last_reply = ""
+    for attempt in range(2):  # 最多重试 1 次
+        try:
+            reply = llm.cached_call("recipe", query, RECIPE_GENERATION_SYSTEM)
+        except RuntimeError as e:
+            return jsonify(error=f"atlas 不可用: {e}"), 503
+        parsed = llm.extract_json(reply)
+        err = _validate_recipe_gen(parsed) if parsed else "无法从回复中提取 JSON"
+        last_reply = reply
+        if not err:
+            import uuid as _uuid
+            ingredients_str = "\n".join(str(x) for x in parsed["ingredients"])
+            steps_str = "\n".join(str(x) for x in parsed["steps"])
+            tags_str = ",".join(str(x) for x in parsed.get("tags", []))
+            new_id = _uuid.uuid4().hex[:16]
+            now = int(time.time())
+            db = get_db()
+            db.execute(
+                """INSERT INTO recipes (id, title, category, difficulty, prep_minutes, cook_minutes,
+                   servings, ingredients, steps, tags, note, created_at, updated_at)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (new_id, parsed["title"], parsed["category"], parsed["difficulty"],
+                 int(parsed["prep_minutes"]), int(parsed["cook_minutes"]),
+                 int(parsed.get("servings", 2)), ingredients_str, steps_str, tags_str,
+                 parsed.get("note", ""), now, now),
+            )
+            db.commit()
+            row = db.execute("SELECT * FROM recipes WHERE id=?", (new_id,)).fetchone()
+            return jsonify(recipe=_row_to_recipe(row)), 201
+        last_err = err
+
+    return jsonify(error=f"AI 生成失败 (2 次重试): {last_err}", reply_excerpt=last_reply[:200]), 422
+
+
+# ---------- AI Generate: Health Articles ----------
+HEALTH_GENERATION_SYSTEM = """你是一位中国营养师/健康科普作者,严格基于 WHO 2024 / 中国居民膳食指南 2022 / 中国国家卫健委指南。
+**绝对禁止**:
+1. 编造来源 - 只能引用 WHO / 国家卫健委 / 中国营养学会 / 《柳叶刀》《新英格兰》等权威源
+2. 编造数据 - 营养素推荐量、疾病发病率必须基于上述权威源;不确定就写"约" + 范围
+3. 给出医疗建议 - 不开药不开方,只科普
+4. 用绝对化用语 - 不写"绝对""100%"等,写"通常""建议"
+
+**必须返回纯 JSON**,不要 markdown,字段:
+- title (8-30 字)
+- category (nutrition|exercise|disease|prevention|mental|female)
+- summary (80-150 字)
+- content (markdown 600-1500 字,带 ## 标题和 - 列表)
+- tags (2-5 个)
+- read_minutes (3-10)
+- source (引用源,多源用 / 分隔)
+"""
+
+
+def _validate_article_gen(a: dict) -> Optional[str]:
+    if not isinstance(a, dict):
+        return "不是 JSON 对象"
+    for f in ["title", "category", "summary", "content", "tags", "read_minutes", "source"]:
+        if f not in a:
+            return f"缺少字段 {f}"
+    valid_cats = {"nutrition", "exercise", "disease", "prevention", "mental", "female"}
+    if a["category"] not in valid_cats:
+        return f"非法 category: {a['category']}"
+    if not (80 <= len(a["summary"]) <= 200):
+        return f"summary 长度 {len(a['summary'])} 超出 80-200 范围"
+    if not (400 <= len(a["content"]) <= 2000):
+        return f"content 长度 {len(a['content'])} 超出 400-2000 范围"
+    allowed = ["WHO", "中国居民膳食指南", "中国国家卫健委", "中国营养学会",
+               "ACOG", "Lancet", "NEJM", "JAMA", "CDC", "中国疾控"]
+    src = a.get("source", "")
+    if not any(s in src for s in allowed):
+        return f"来源 '{src}' 不在白名单 {allowed}"
+    bad_words = ["绝对", "100%有效", "包治", "神药", "立竿见影"]
+    for w in bad_words:
+        if w in a.get("content", "") or w in a.get("summary", ""):
+            return f"禁用词: '{w}'"
+    return None
+
+
+@app.post("/api/v1/health/articles/generate")
+def generate_health_article():
+    """AI generate a real, fact-checked health article on a topic."""
+    body = request.get_json(silent=True) or {}
+    topic = (body.get("topic") or "").strip()
+    category = (body.get("category") or "").strip()
+    if not topic:
+        abort(400, description="topic 必填 (如'维生素 D 补充'或'孕期营养')")
+    if category and category not in {"nutrition", "exercise", "disease", "prevention", "mental", "female"}:
+        abort(400, description="category 非法")
+    if len(topic) > 100:
+        abort(400, description="topic 太长")
+
+    user_msg = f"主题: {topic}" + (f"\n类别: {category}" if category else "")
+    full_msg = f"{HEALTH_GENERATION_SYSTEM}\n\n{user_msg}\n只返回 JSON,不要其他文字。"
+
+    last_err = None
+    last_reply = ""
+    for attempt in range(2):
+        try:
+            reply = llm.cached_call("health", user_msg, HEALTH_GENERATION_SYSTEM)
+        except RuntimeError as e:
+            return jsonify(error=f"atlas 不可用: {e}"), 503
+        parsed = llm.extract_json(reply)
+        err = _validate_article_gen(parsed) if parsed else "无法从回复中提取 JSON"
+        last_reply = reply
+        if not err:
+            import uuid as _uuid
+            new_id = f"ai{_uuid.uuid4().hex[:8]}"
+            new_article = dict(parsed, id=new_id)
+            HEALTH_ARTICLES.append(new_article)
+            return jsonify(article=new_article), 201
+        last_err = err
+
+    return jsonify(error=f"AI 生成失败: {last_err}", reply_excerpt=last_reply[:200]), 422
 
 
 # ---------- Bootstrap ----------

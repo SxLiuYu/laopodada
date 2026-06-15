@@ -15,6 +15,20 @@ function renderHealthPage() {
   const page = document.getElementById('page-health');
   page.innerHTML = `
     <div class="page-header">📚 健康知识</div>
+    <div class="ai-gen-bar">
+      <input id="health-ai-input" type="text" placeholder="想了解啥?输入健康主题(例:孕期叶酸 / 失眠调理)" maxlength="100">
+      <select id="health-ai-cat" style="padding:6px 8px;border:1px solid #ddd;border-radius:8px;font-size:13px;">
+        <option value="nutrition">🥗 营养</option>
+        <option value="exercise">🏃 运动</option>
+        <option value="disease">🩺 慢病</option>
+        <option value="prevention">💉 预防</option>
+        <option value="mental">🧘 心理</option>
+        <option value="female">🌸 女性</option>
+      </select>
+      <button id="health-ai-btn" class="ai-btn">✨ AI 生成</button>
+    </div>
+    <p class="ai-hint">💡 LLM 需 60-90 秒,内容基于权威医学常识</p>
+    <div id="health-ai-result" class="ai-result hidden"></div>
     <div class="filter-bar" id="health-cat-bar"></div>
     <div style="padding:8px 12px;">
       <input type="search" id="health-search" placeholder="搜索文章..."
@@ -23,6 +37,49 @@ function renderHealthPage() {
     <div id="health-list">加载中…</div>
   `;
   renderHealthCatBar();
+
+  // AI 生成按钮
+  document.getElementById('health-ai-btn').onclick = async () => {
+    const input = document.getElementById('health-ai-input');
+    const topic = input.value.trim();
+    const category = document.getElementById('health-ai-cat').value;
+    if (!topic) {
+      alert('请输入健康主题');
+      return;
+    }
+    const btn = document.getElementById('health-ai-btn');
+    const resultBox = document.getElementById('health-ai-result');
+    btn.disabled = true;
+    btn.textContent = 'AI 在写文章... 60-90s';
+    resultBox.classList.remove('hidden');
+    resultBox.innerHTML = '<div class="ai-loading">🤔 AI 思考中,请耐心等待(约 60-90 秒)...</div>';
+
+    try {
+      const data = await generateHealthArticle(topic, category);
+      const a = data.article;
+      resultBox.innerHTML = `
+        <div class="ai-result-card">
+          <div class="ai-result-header">
+            <h3>✨ ${escapeHtml(a.title)}</h3>
+            <span class="ai-tag">AI 生成</span>
+          </div>
+          <p class="ai-summary">${escapeHtml(a.summary || '')}</p>
+          <h4>正文</h4>
+          <pre class="ai-content">${escapeHtml(a.content || '')}</pre>
+          <p class="ai-source">📚 ${escapeHtml(a.source || '未知')}</p>
+          <p class="ai-meta">⏱ ${a.read_minutes || 5} 分钟阅读 · 🏷 ${(a.tags || []).map(t => escapeHtml(t)).join(' / ')}</p>
+        </div>
+      `;
+      prependArticleToList(a);
+      input.value = '';
+    } catch (e) {
+      resultBox.innerHTML = `<div class="ai-error">❌ ${escapeHtml(e.message)}</div>`;
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '✨ AI 生成';
+    }
+  };
+
   loadHealthArticles();
 }
 
@@ -115,4 +172,21 @@ function categoryEmoji(cat) {
 }
 function escapeHtml(s) {
   return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
+}
+
+function prependArticleToList(article) {
+  const list = document.getElementById('health-list');
+  // 移除 empty state
+  const empty = list.querySelector('.empty-state');
+  if (empty) empty.remove();
+  const div = document.createElement('div');
+  div.className = 'article-card ai-card';
+  div.onclick = () => openHealthArticle(article.id);
+  div.innerHTML = `
+    <div class="article-cat">${categoryEmoji(article.category)} ${article.category || ''} <span class="ai-tag" style="font-size:10px;margin-left:4px;">AI</span></div>
+    <div class="article-title">✨ ${escapeHtml(article.title)}</div>
+    <div class="article-summary">${escapeHtml(article.summary || '')}</div>
+    <div class="article-meta">⏱ ${article.read_minutes || 5} 分钟</div>
+  `;
+  list.insertBefore(div, list.firstChild);
 }
