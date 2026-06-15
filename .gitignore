@@ -59,3 +59,7 @@ node_modules/
 package-lock.json
 cordova/platforms/
 cordova/build/
+
+# superpowers-zh worktree 隔离
+.worktrees
+worktrees/
