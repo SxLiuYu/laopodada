@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 """Test outfit-recommend endpoint."""
 import json
+import ssl
 import sys
 import urllib.request
 
 BASE = "https://123.57.107.21:8088"
+_CTX = ssl._create_unverified_context()  # self-signed cert OK for test
 
 
 def test_recommend():
@@ -15,7 +17,7 @@ def test_recommend():
         headers={"Content-Type": "application/json"},
         method="POST",
     )
-    with urllib.request.urlopen(req, timeout=30) as r:
+    with urllib.request.urlopen(req, timeout=30, context=_CTX) as r:
         data = json.loads(r.read())
 
     assert "top" in data, f"Missing top: {data}"
@@ -28,7 +30,7 @@ def test_recommend():
 
     # Verify IDs exist in wardrobe
     req2 = urllib.request.Request(f"{BASE}/api/v1/items", method="GET")
-    with urllib.request.urlopen(req2, timeout=10) as r2:
+    with urllib.request.urlopen(req2, timeout=10, context=_CTX) as r2:
         wardrobe = json.loads(r2.read())
     item_ids = {it["id"] for it in wardrobe["items"]}
     assert top_id in item_ids, f"top id {top_id} not in wardrobe: {item_ids}"
@@ -36,7 +38,7 @@ def test_recommend():
 
     # Verify DB row saved
     req3 = urllib.request.Request(f"{BASE}/api/v1/outfit/history", method="GET")
-    with urllib.request.urlopen(req3, timeout=10) as r3:
+    with urllib.request.urlopen(req3, timeout=10, context=_CTX) as r3:
         history = json.loads(r3.read())
     assert any(rec["id"] == data["id"] for rec in history["recommendations"]), \
         f"Recommendation {data['id']} not in history"
