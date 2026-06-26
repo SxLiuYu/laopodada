@@ -1,0 +1,101 @@
+/* recommend.css — 穿搭推荐页样式 */
+
+.recommend-body { flex: 1; overflow-y: auto; background: var(--bg); }
+
+/* ── 场景 tab ── */
+.recommend-scene-bar {
+  display: flex;
+  gap: 6px;
+  padding: var(--sp-2) var(--sp-3);
+  overflow-x: auto;
+  background: var(--bg-white);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.scene-chip {
+  flex-shrink: 0;
+  padding: 6px var(--sp-3);
+  border-radius: var(--r-full);
+  border: 1px solid var(--border-input);
+  background: var(--bg-white);
+  color: var(--text-secondary);
+  font-size: var(--fs-md);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all .15s var(--ease);
+}
+.scene-chip.active {
+  background: var(--gradient-warm);
+  color: #fff;
+  border-color: transparent;
+  font-weight: 500;
+}
+
+/* ── 推荐结果 ── */
+.recommend-results {
+  padding: var(--sp-3) 0;
+}
+.rec-loading {
+  padding: var(--sp-4);
+}
+
+/* ── 单个搭配卡片(在 outfit-card 基础上扩展) ── */
+.rec-item-thumb {
+  width: 72px;
+  flex-shrink: 0;
+  text-align: center;
+  cursor: pointer;
+}
+.rec-item-thumb img {
+  width: 72px;
+  height: 72px;
+  border-radius: var(--r-sm);
+  object-fit: cover;
+  border: 1px solid var(--border);
+  transition: transform .15s var(--ease);
+}
+.rec-item-thumb img:active { transform: scale(.95); }
+.rec-item-label {
+  font-size: var(--fs-xs);
+  color: var(--text-secondary);
+  margin-top: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rec-llm-note {
+  font-size: var(--fs-base);
+  color: var(--text-secondary);
+  background: #FFF8E1;
+  border-radius: var(--r-sm);
+  padding: 6px var(--sp-3);
+  margin-top: 6px;
+}
+
+/* ── 个性化推荐栏 ── */
+.rec-personalize {
+  padding: var(--sp-3) var(--sp-4);
+  border-top: 1px solid var(--border);
+  background: var(--bg-white);
+  flex-shrink: 0;
+  position: sticky;
+  bottom: 0;
+}
+.rec-personalize-title {
+  font-size: var(--fs-sm);
+  color: var(--text-hint);
+  margin-bottom: var(--sp-2);
+  text-align: center;
+}
+.rec-personalize-bar {
+  display: flex;
+  gap: var(--sp-2);
+  align-items: center;
+}
+.rec-personalize-bar input {
+  flex: 1;
+}
+.rec-personalize-bar .ai-btn {
+  flex-shrink: 0;
+}

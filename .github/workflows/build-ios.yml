@@ -1,0 +1,66 @@
+name: Build iOS (Capacitor)
+
+"on":
+  push:
+    branches: [main]
+    paths:
+      - 'www/**'
+      - 'ios/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'capacitor.config.json'
+      - '.github/workflows/build-ios.yml'
+  workflow_dispatch:
+
+jobs:
+  build-ios:
+    runs-on: macos-14
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Setup Xcode 15.4
+        run: sudo xcode-select -s /Applications/Xcode_15.4.app/Contents/Developer
+
+      - name: Install npm dependencies (regen lockfile with npmjs registry for CI integrity)
+        run: |
+          rm -f package-lock.json
+          npm install --no-audit --no-fund --registry=https://registry.npmjs.org/
+
+      - name: Cap sync (web assets → ios)
+        run: node node_modules/@capacitor/cli/bin/capacitor sync ios
+
+      - name: xcodebuild for simulator
+        working-directory: ios/App
+        run: |
+          xcodebuild \
+            -project App.xcodeproj \
+            -scheme App \
+            -configuration Release \
+            -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            build | tail -50
+
+      - name: Package .app into zip
+        working-directory: ios/App
+        run: |
+          zip -r /tmp/ios-build.zip build/Build/Products/Release-iphonesimulator/App.app
+
+      - name: Upload iOS build artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-build
+          path: /tmp/ios-build.zip
+          retention-days: 7
+          if-no-files-found: warn

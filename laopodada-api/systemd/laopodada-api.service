@@ -1,0 +1,18 @@
+[Unit]
+Description=laopodada-api (laopodada mobile backend)
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/laopodada-api
+Environment="LAOPODADA_DATA_DIR=/data/laopodada"
+Environment="LAOPODADA_PUBLIC_URL=http://123.57.107.21:8088"
+ExecStart=/opt/laopodada-api/venv/bin/gunicorn -c /opt/laopodada-api/gunicorn.conf.py app:app
+Restart=always
+RestartSec=3
+StandardOutput=append:/opt/laopodada-api/app.log
+StandardError=append:/opt/laopodada-api/app.log
+
+[Install]
+WantedBy=multi-user.target

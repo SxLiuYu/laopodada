@@ -1,0 +1,98 @@
+"""data_wardrobe.py — 10 件衣橱 demo 数据(节 2.3, 节 1 衣橱 10 件清单)
+
+Unsplash query 走 source.unsplash.com 公共端点,无需 key。
+7 category 全覆盖,AI outfit 至少能组合 3 套 casual + 1 套 formal + 1 套 summer。
+"""
+
+WARDROBE = [
+    {
+        "id_hint": "white_tee",
+        "category": "top",
+        "title": "白色棉质 T 恤",
+        "brand": "Uniqlo",
+        "color": "白",
+        "season": "四季",
+        "unsplash_query": "white cotton tshirt flatlay",
+    },
+    {
+        "id_hint": "black_knit",
+        "category": "top",
+        "title": "黑色针织衫",
+        "brand": "MUJI",
+        "color": "黑",
+        "season": "秋",
+        "unsplash_query": "black knit sweater",
+    },
+    {
+        "id_hint": "beige_linen_shirt",
+        "category": "top",
+        "title": "米色亚麻衬衫",
+        "brand": "COS",
+        "color": "米",
+        "season": "夏",
+        "unsplash_query": "beige linen shirt",
+    },
+    {
+        "id_hint": "blue_jeans",
+        "category": "bottom",
+        "title": "蓝色直筒牛仔裤",
+        "brand": "Levi's",
+        "color": "蓝",
+        "season": "四季",
+        "unsplash_query": "blue straight jeans",
+    },
+    {
+        "id_hint": "black_dress_pants",
+        "category": "bottom",
+        "title": "黑色西装裤",
+        "brand": "Zara",
+        "color": "黑",
+        "season": "秋",
+        "unsplash_query": "black dress pants women",
+    },
+    {
+        "id_hint": "floral_dress",
+        "category": "dress",
+        "title": "碎花连衣裙",
+        "brand": "H&M",
+        "color": "蓝",
+        "season": "夏",
+        "unsplash_query": "floral summer dress",
+    },
+    {
+        "id_hint": "camel_coat",
+        "category": "outerwear",
+        "title": "驼色大衣",
+        "brand": "MaxMara",
+        "color": "棕",
+        "season": "冬",
+        "unsplash_query": "camel coat women",
+    },
+    {
+        "id_hint": "white_sneakers",
+        "category": "shoes",
+        "title": "白色运动鞋",
+        "brand": "Nike",
+        "color": "白",
+        "season": "四季",
+        "unsplash_query": "white sneakers",
+    },
+    {
+        "id_hint": "black_heels",
+        "category": "shoes",
+        "title": "黑色高跟鞋",
+        "brand": "Steve Madden",
+        "color": "黑",
+        "season": "四季",
+        "unsplash_query": "black heels",
+    },
+    {
+        "id_hint": "brown_handbag",
+        "category": "bag",
+        "title": "棕色手提包",
+        "brand": "Coach",
+        "color": "棕",
+        "season": "四季",
+        "unsplash_query": "brown leather handbag",
+    },
+]

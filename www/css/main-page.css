@@ -1,0 +1,79 @@
+/* www/css/main-page.css — 主页 3 卡片 + 底部 3 tab 样式 */
+
+.main-page { padding: var(--sp-4); min-height: calc(100vh - 80px); }
+.main-greet { font-size: var(--fs-2xl); font-weight: 700; margin-bottom: 4px; color: var(--text-primary); }
+.main-greet-sub { font-size: var(--fs-base); color: var(--text-hint); margin-bottom: var(--sp-5); }
+
+.main-card {
+  display: flex;
+  align-items: center;
+  padding: 18px;
+  border-radius: var(--r-lg);
+  margin-bottom: 14px;
+  cursor: pointer;
+  transition: transform .15s var(--ease);
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 2px 6px rgba(0,0,0,.04);
+}
+.main-card:active { transform: scale(.97); }
+.main-card-wardrobe { background: linear-gradient(135deg, #fff5e6, #ffe0cc); }
+.main-card-recipe   { background: linear-gradient(135deg, #ffe6f0, #ffccdd); }
+.main-card-health   { background: linear-gradient(135deg, #e6f5ff, #cce5ff); }
+
+.main-card-icon { font-size: 36px; margin-right: var(--sp-4); flex-shrink: 0; }
+.main-card-body h4 { font-size: var(--fs-lg); margin-bottom: 4px; font-weight: 700; color: var(--text-primary); }
+.main-card-body p { font-size: var(--fs-sm); color: var(--text-secondary); line-height: 1.4; margin-bottom: 6px; }
+.main-card-tag {
+  display: inline-block;
+  background: rgba(255, 255, 255, 0.85);
+  color: #c44;
+  font-size: var(--fs-xs);
+  padding: 3px var(--sp-2);
+  border-radius: 6px;
+  font-weight: 600;
+}
+
+/* ── skeleton loading for main page cards ── */
+.main-card-skeleton {
+  display: flex;
+  align-items: center;
+  padding: 18px;
+  border-radius: var(--r-lg);
+  margin-bottom: 14px;
+  overflow: hidden;
+  background: var(--bg-white);
+}
+.main-card-skeleton .sk-icon {
+  width: 36px; height: 36px; border-radius: 50%; margin-right: var(--sp-4);
+}
+.main-card-skeleton .sk-texts { flex: 1; }
+
+/* ── 底部 3 tab(tabbar) ── */
+.tabbar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  background: var(--bg-white);
+  border-top: 1px solid var(--border);
+  z-index: 50;
+  padding: var(--sp-2) 4px;
+  padding-bottom: max(var(--sp-2), env(safe-area-inset-bottom));
+}
+.tabbar .tab {
+  flex: 1;
+  text-align: center;
+  padding: 10px 0;
+  font-size: var(--fs-md);
+  cursor: pointer;
+  border-radius: var(--r-sm);
+  color: var(--text-hint);
+  transition: all .15s var(--ease);
+}
+.tabbar .tab.active {
+  background: var(--gradient);
+  color: #fff;
+  font-weight: 600;
+}

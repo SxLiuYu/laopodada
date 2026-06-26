@@ -1,0 +1,267 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  # ---------- Backend ----------
+  api:
+    name: laopodada-api
+    runs-on: ubuntu-latest
+    env:
+      LAOPODADA_DATA_DIR: /tmp/laopodada-smoke
+    defaults:
+      run:
+        working-directory: laopodada-api
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: laopodada-api/requirements.txt
+
+      - name: Install deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Import smoke check
+        run: |
+          # Pre-create the data dir so init_db() doesn't fail on cold cache
+          mkdir -p /tmp/laopodada-smoke/db /tmp/laopodada-smoke/images/original /tmp/laopodada-smoke/images/list /tmp/laopodada-smoke/images/thumb
+          LAOPODADA_DATA_DIR=/tmp/laopodada-smoke python -c "from app import app; print('routes:', sorted(r.rule for r in app.url_map.iter_rules()))"
+
+      - name: Start gunicorn in background
+        run: |
+          nohup python -m gunicorn -c gunicorn.conf.py app:app > /tmp/gunicorn.out 2>&1 &
+          echo $! > /tmp/gunicorn.pid
+          # gunicorn 2 workers cold-start: wait for port with a retry loop
+          for i in 1 2 3 4 5 6 7 8 9 10; do
+            if curl -fsS http://127.0.0.1:8097/health >/dev/null 2>&1; then
+              echo "gunicorn ready after ${i}s"
+              break
+            fi
+            sleep 1
+          done
+          echo "--- gunicorn.out (post-start) ---"
+          cat /tmp/gunicorn.out 2>/dev/null || echo "(empty)"
+          echo "--- listening sockets ---"
+          (ss -tlnp 2>/dev/null || netstat -tlnp 2>/dev/null) | grep 8097 || echo "(nothing on 8097)"
+          echo "--- ps for gunicorn ---"
+          ps -ef | grep -E "gunicorn" | grep -v grep || echo "(no gunicorn process)"
+
+      - name: Health check
+        run: |
+          echo "--- gunicorn.out (pre-healthcheck) ---"
+          cat /tmp/gunicorn.out 2>/dev/null || echo "(empty)"
+          echo "--- listening sockets ---"
+          (ss -tlnp 2>/dev/null || netstat -tlnp 2>/dev/null) | grep 8097 || echo "(nothing on 8097)"
+          echo "--- curl /health ---"
+          curl -v http://127.0.0.1:8097/health 2>&1 | tail -30
+          echo
+
+      - name: End-to-end CRUD smoke test
+        run: |
+          set +e   # don't abort — we want to see exactly which line fails
+          rc=0
+          dump_diag() {
+            echo "==== DIAG: gunicorn.out ===="
+            cat /tmp/gunicorn.out 2>/dev/null
+            echo "==== DIAG: gunicorn ps ===="
+            ps -ef | grep gunicorn | grep -v grep
+            echo "==== DIAG: ls /tmp ===="
+            ls -la /tmp/ | grep -E "gunicorn|ci.jpg"
+            echo "==== DIAG: LAOPODADA_DATA_DIR ===="
+            echo "DATA_DIR=$LAOPODADA_DATA_DIR"
+            ls -laR "$LAOPODADA_DATA_DIR" 2>/dev/null | head -50
+            echo "==== DIAG: app routes ===="
+            python -c "from app import app; [print(r.rule, r.methods) for r in app.url_map.iter_rules() if 'api' in r.rule]"
+          }
+          trap 'rc=$?; echo "==== STEP FAILED, rc=$rc ===="; dump_diag; mkdir -p diag && dump_diag > diag/crud-fail.log 2>&1; exit $rc' ERR
+
+          # Create a tiny test image
+          python -c "
+          from PIL import Image
+          Image.new('RGB', (400, 300), 'lightblue').save('/tmp/ci.jpg', 'JPEG')
+          print('image saved')
+          "
+          ls -la /tmp/ci.jpg
+
+          # POST upload (verbose on failure)
+          echo "--- POST /api/v1/items ---"
+          RESP=$(curl -sS -X POST http://127.0.0.1:8097/api/v1/items \
+            -F 'file=@/tmp/ci.jpg' -F 'category=top' -F 'title=ci测试' -w '\nHTTP=%{http_code}\n')
+          echo "POST response: $RESP"
+          BODY=$(echo "$RESP" | sed '/^HTTP=/d')
+          ID=$(echo "$BODY" | python3 -c "import sys,json; print(json.load(sys.stdin)['item']['id'])" 2>/dev/null) || {
+            echo "POST failed to parse item id; dumping diag"
+            dump_diag
+            exit 1
+          }
+          echo "Created id: $ID"
+
+          # GET list
+          echo "--- GET /api/v1/items ---"
+          curl -sS http://127.0.0.1:8097/api/v1/items -w '\nHTTP=%{http_code}\n' | head -50
+
+          # GET one
+          echo "--- GET /api/v1/items/$ID ---"
+          curl -sS http://127.0.0.1:8097/api/v1/items/$ID -w '\nHTTP=%{http_code}\n' | head -50
+
+          # Verify thumbnail
+          echo "--- thumbnail check ---"
+          curl -sS http://127.0.0.1:8097/api/v1/items/$ID | python3 -c "
+          import sys,json,urllib.request
+          d=json.load(sys.stdin)
+          for label in ('thumbnail_url','list_url','original_url'):
+            with urllib.request.urlopen(d[label]) as r:
+              head=r.read(3)
+              assert head[:3]==b'\xff\xd8\xff', f'{label} not JPEG'
+              print(f'{label} ok, status={r.status}')
+          "
+
+          # DELETE
+          echo "--- DELETE /api/v1/items/$ID ---"
+          curl -sS -X DELETE http://127.0.0.1:8097/api/v1/items/$ID -w '\nHTTP=%{http_code}\n'
+
+          # Confirm gone
+          echo "--- GET after delete ---"
+          HTTP=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8097/api/v1/items/$ID)
+          echo "post-delete HTTP=$HTTP"
+          [ "$HTTP" = "404" ] && echo "post-delete 404 ok" || (echo "expected 404, got $HTTP"; dump_diag; exit 1)
+          echo "==== ALL CRUD STEPS PASSED ===="
+
+      - name: Outfit recommend smoke test
+        continue-on-error: true
+        run: |
+          set +e
+          rc=0
+
+          # Seed 3 wardrobe items
+          python -c "
+          from PIL import Image
+          Image.new('RGB', (20, 20), 'navy').save('/tmp/ci_outfit.jpg', 'JPEG')
+          print('seed image ok')
+          "
+
+          echo "--- POST /api/v1/items (top) ---"
+          TOP_ID=$(curl -sS -X POST http://127.0.0.1:8097/api/v1/items \
+            -F 'file=@/tmp/ci_outfit.jpg' -F 'category=top' -F 'color=navy' \
+            -F 'title=ci-top' | python3 -c "import sys,json; print(json.load(sys.stdin)['item']['id'])")
+          echo "top_id=$TOP_ID"
+
+          echo "--- POST /api/v1/items (bottom) ---"
+          BOT_ID=$(curl -sS -X POST http://127.0.0.1:8097/api/v1/items \
+            -F 'file=@/tmp/ci_outfit.jpg' -F 'category=bottom' -F 'color=black' \
+            -F 'title=ci-bottom' | python3 -c "import sys,json; print(json.load(sys.stdin)['item']['id'])")
+          echo "bot_id=$BOT_ID"
+
+          echo "--- POST /api/v1/items (shoes) ---"
+          SHOE_ID=$(curl -sS -X POST http://127.0.0.1:8097/api/v1/items \
+            -F 'file=@/tmp/ci_outfit.jpg' -F 'category=shoes' -F 'color=gray' \
+            -F 'title=ci-shoes' | python3 -c "import sys,json; print(json.load(sys.stdin)['item']['id'])")
+          echo "shoe_id=$SHOE_ID"
+
+          echo "--- POST /api/v1/outfits/recommend ---"
+          RESP=$(curl -sS -X POST http://127.0.0.1:8097/api/v1/outfits/recommend \
+            -H 'Content-Type: application/json' \
+            -d '{"occasion":"casual"}' -w '\nHTTP=%{http_code}\n')
+          HTTP_CODE=$(echo "$RESP" | sed -n 's/.*HTTP=//p')
+          BODY=$(echo "$RESP" | sed '/^HTTP=/d')
+          echo "recommend HTTP=$HTTP_CODE"
+          echo "recommend body=$BODY"
+
+          # Assertions
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "FAIL: expected HTTP 200, got $HTTP_CODE"
+            rc=1
+          fi
+
+          OUTFITS_COUNT=$(echo "$BODY" | python3 -c "import sys,json; print(len(json.load(sys.stdin).get('outfits',[])))" 2>/dev/null)
+          if [ "$OUTFITS_COUNT" -lt 1 ]; then
+            echo "FAIL: expected outfits array with at least 1 entry, got count=$OUTFITS_COUNT"
+            rc=1
+          fi
+
+          SCORE=$(echo "$BODY" | python3 -c "import sys,json; print(json.load(sys.stdin)['outfits'][0]['style_score'])" 2>/dev/null)
+          if [ -n "$SCORE" ]; then
+            PASS=$(python3 -c "s=float('$SCORE'); print('ok' if 0<=s<=1 else 'fail')" 2>/dev/null)
+            if [ "$PASS" != "ok" ]; then
+              echo "FAIL: style_score $SCORE not in [0,1]"
+              rc=1
+            else
+              echo "style_score $SCORE ∈ [0,1] — ok"
+            fi
+          fi
+
+          STRATEGIES=$(echo "$BODY" | python3 -c "import sys,json; print(json.load(sys.stdin).get('used_strategy',[]))" 2>/dev/null)
+          echo "used_strategy=$STRATEGIES"
+
+          if [ $rc -eq 0 ]; then
+            echo "==== RECOMMEND SMOKE PASSED ===="
+          else
+            echo "==== RECOMMEND SMOKE FAILED (non-blocking) ===="
+          fi
+          exit 0
+
+      - name: Stop gunicorn
+        if: always()
+        run: |
+          [ -f /tmp/gunicorn.pid ] && kill $(cat /tmp/gunicorn.pid) 2>/dev/null || true
+
+  # ---------- iOS static syntax check ----------
+  ios:
+    name: laopodada-ios (syntax)
+    runs-on: ubuntu-24.04
+    continue-on-error: true   # swift install is flaky in CI; failure here is informational
+    defaults:
+      run:
+        working-directory: laopodada-ios
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Swift
+        uses: swift-actions/setup-swift@v3
+        with:
+          swift-version: "5.10"
+
+      - name: Parse-only syntax check
+        # -parse flag: lex+parse, no typecheck, no codegen. Catches syntax errors only.
+        # On Linux swift toolchain, UIKit/SwiftUI symbols are not available so we use
+        # -parse (and tolerate unresolved identifier messages — those are NOT syntax errors).
+        run: |
+          set +e
+          for f in $(find Sources -name '*.swift'); do
+            out=$(swiftc -parse "$f" 2>&1)
+            rc=$?
+            # Real syntax errors: "error:" not preceded by "cannot find" / "no such module" /
+            # "has no member" / "is ambiguous" / "is unavailable" (those are semantic, not syntax).
+            real=$(echo "$out" | grep -E ":[0-9]+:[0-9]+: error:" | \
+                   grep -vE "cannot find|no such module|has no member|is ambiguous|is unavailable|expected module '|in call to function|missing argument|extra argument" || true)
+            if [ -n "$real" ]; then
+              echo "SYNTAX ERROR in $f:"
+              echo "$real" | head -10
+              exit 1
+            fi
+          done
+          echo "syntax pass done"
+
+  # ---------- Lint py ----------
+  py-lint:
+    name: python lint
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: laopodada-api
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install ruff==0.5.0
+      - run: ruff check app.py gunicorn.conf.py

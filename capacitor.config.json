@@ -1,0 +1,10 @@
+{
+  "appId": "com.laopodada.app",
+  "appName": "老婆哒哒",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "http",
+    "iosScheme": "capacitor",
+    "cleartext": true
+  }
+}
