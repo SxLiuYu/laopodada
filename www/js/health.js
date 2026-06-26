@@ -48,7 +48,14 @@ function renderHealthPage() {
   renderHealthCatBar();
 
   // AI 生成按钮 (handler moved to genHealthArticle via onclick attribute)
+
+  // Show skeleton while loading
+  renderListSkeleton('health-list', 4);
+
   loadHealthArticles();
+
+  // Pull-to-refresh (native only)
+  enablePullRefresh(loadHealthArticles);
 
   // AI 浮动按钮(渐变 ✨ 单按钮,无拍照)
   if (typeof AIFab !== 'undefined') {
@@ -152,7 +159,10 @@ function openHealthArticle(id) {
         <button onclick="this.closest('.modal-mask').remove()">✕</button>
       </div>
       <div class="modal-body" style="line-height:1.7;"><p style="margin-bottom:10px;">${simpleMarkdown(a.content)}</p></div>
-      <div class="modal-footer">📖 来源:${escapeHtml(a.source || '未知')} · ${a.read_minutes || 5} 分钟阅读</div>
+      <div class="modal-footer" style="display:flex;justify-content:space-between;align-items:center;">
+        <span>📖 ${escapeHtml(a.source || '未知')} · ${a.read_minutes || 5} 分钟</span>
+        <button onclick="toggleHealthFav('${a.id}')" id="hfav-${a.id}" style="background:none;border:none;font-size:var(--fs-md);cursor:pointer;">${isHealthFav(a.id) ? '❤️ 已收藏' : '🤍 收藏'}</button>
+      </div>
     </div>
   `;
   document.body.appendChild(modal);
@@ -245,4 +255,17 @@ function toggleHealthAI() {
     body.style.display = 'none';
     arrow.style.transform = 'rotate(0deg)';
   }
+}
+
+function isHealthFav(id) {
+  try { return JSON.parse(localStorage.getItem('health_favs') || '[]').includes(id); } catch { return false; }
+}
+function toggleHealthFav(id) {
+  let favs = JSON.parse(localStorage.getItem('health_favs') || '[]');
+  const idx = favs.indexOf(id);
+  if (idx >= 0) { favs.splice(idx, 1); toast('已取消收藏'); }
+  else { favs.push(id); toast('已收藏 ❤️'); }
+  localStorage.setItem('health_favs', JSON.stringify(favs));
+  const btn = document.getElementById('hfav-' + id);
+  if (btn) btn.textContent = isHealthFav(id) ? '❤️ 已收藏' : '🤍 收藏';
 }

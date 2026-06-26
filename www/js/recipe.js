@@ -1,6 +1,8 @@
 /* recipe.js — 菜谱页 */
 
 let recipeFilter = { category: '', difficulty: '', search: '' };
+let recipeFavorites = [];
+try { recipeFavorites = JSON.parse(localStorage.getItem('recipe_favs') || '[]'); } catch(e) { console.warn('[recipe] localStorage not available'); }
 
 const RECIPE_CATEGORIES = [
   { key: '',        label: '全部' },
@@ -65,7 +67,13 @@ function renderRecipePage() {
   // AI 生成按钮
   document.getElementById('recipe-ai-btn').onclick = genRecipe;
 
+  // Show skeleton while loading
+  renderGridSkeleton('recipe-grid', 2, 3);
+
   loadRecipes();
+
+  // Pull-to-refresh (native only)
+  enablePullRefresh(loadRecipes);
 
   // AI 浮动按钮(渐变 ✨ 单按钮,无拍照)
   if (typeof AIFab !== 'undefined') {
@@ -241,6 +249,7 @@ async function showRecipeDetail(id) {
         </div>
         <div class="btn-action-row" style="margin-top:var(--sp-4);">
           <button class="btn-outline" onclick="this.closest('.overlay').remove()">关闭</button>
+          <button class="btn-outline" onclick="toggleRecipeFav('${r.id}')" id="fav-btn-${r.id}" style="flex:1;">${recipeFavorites.includes(r.id) ? '❤️ 已收藏' : '🤍 收藏'}</button>
           <button class="btn-danger" onclick="confirmDeleteRecipe('${r.id}')">删除</button>
         </div>
       </div>
@@ -352,4 +361,13 @@ async function submitRecipe() {
   } catch(e) {
     toast('保存失败：' + e.message);
   }
+}
+
+function toggleRecipeFav(id) {
+  const idx = recipeFavorites.indexOf(id);
+  if (idx >= 0) { recipeFavorites.splice(idx, 1); toast('已取消收藏'); }
+  else { recipeFavorites.push(id); toast('已收藏 ❤️'); }
+  localStorage.setItem('recipe_favs', JSON.stringify(recipeFavorites));
+  const btn = document.getElementById('fav-btn-' + id);
+  if (btn) btn.textContent = recipeFavorites.includes(id) ? '❤️ 已收藏' : '🤍 收藏';
 }

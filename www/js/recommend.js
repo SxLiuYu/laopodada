@@ -132,6 +132,7 @@ function renderOutfitCard(outfit, index) {
       ${outfit.llm_note ? `<div class="rec-llm-note">💡 ${escapeHtml(outfit.llm_note)}</div>` : ''}
       <div class="outfit-actions">
         <button class="btn-like" onclick="likeOutfit(${index})">👍 不错</button>
+        <button class="btn-like" onclick="saveOutfit(${index})">💾 保存</button>
         <button class="btn-dislike" onclick="dislikeOutfit(${index})">🔄 换一套</button>
       </div>
     </div>`;
@@ -190,5 +191,27 @@ async function requestCustomRecommend() {
     results.innerHTML = `<div class="ai-error">生成失败: ${escapeHtml(e.message)}</div>`;
     btn.disabled = false;
     btn.textContent = '✨ 生成';
+  }
+}
+
+function saveOutfit(index) {
+  const outfit = _currentOutfits[index];
+  if (!outfit) return;
+  try {
+    let saved = JSON.parse(localStorage.getItem('saved_outfits') || '[]');
+    saved.push({
+      items: outfit.items || [],
+      description: outfit.description || '',
+      reason: outfit.reason || '',
+      tips: outfit.llm_note || outfit.tips || '',
+      style_score: outfit.style_score || 0,
+      saved_at: Date.now(),
+    });
+    // Keep max 30
+    if (saved.length > 30) saved = saved.slice(-30);
+    localStorage.setItem('saved_outfits', JSON.stringify(saved));
+    toast('穿搭已保存 💾');
+  } catch (e) {
+    toast('保存失败');
   }
 }

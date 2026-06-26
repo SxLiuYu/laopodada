@@ -2,6 +2,7 @@
 
 let wardrobeFilter = 'all';
 let _pendingUploadFile = null;
+let wardrobeSearch = '';
 
 const CATEGORY_NAMES = {
   all: '全部', top: '上装', bottom: '下装', dress: '连衣裙',
@@ -21,6 +22,10 @@ function renderWardrobePage() {
   html += `</div>`;
 
   html += `
+    <div style="padding:var(--sp-2) var(--sp-3);">
+      <input type="search" id="wardrobe-search" class="form-input" placeholder="搜索名称/颜色/品牌…"
+        oninput="wardrobeSearch=this.value;loadWardrobe()">
+    </div>
     <div style="display:flex;gap:8px;margin:10px 0;">
       <button class="btn-primary" onclick="startAddItem()" style="display:flex;align-items:center;justify-content:center;gap:6px;flex:1;">
         📷 拍照 / 选图 添加衣物
@@ -58,6 +63,9 @@ function renderWardrobePage() {
     });
 
     AIFab.initPhotoBar('wardrobe', () => { startAddItem(); });
+
+    // Pull-to-refresh (native only)
+    enablePullRefresh(loadWardrobe);
   }
 }
 
@@ -232,7 +240,18 @@ async function loadWardrobe() {
       grid.innerHTML = `<div class="empty-state"><span class="emoji">👗</span>衣橱空空,<br>点击上方"拍照 / 选图"添加第一件吧～</div>`;
       return;
     }
-    grid.innerHTML = items.map(it => `
+    // Client-side search filter
+    let filtered = items;
+    if (wardrobeSearch) {
+      const q = wardrobeSearch.toLowerCase();
+      filtered = items.filter(it =>
+        (it.title||'').toLowerCase().includes(q) ||
+        (it.color||'').toLowerCase().includes(q) ||
+        (it.brand||'').toLowerCase().includes(q) ||
+        (it.category||'').toLowerCase().includes(q)
+      );
+    }
+    grid.innerHTML = filtered.map(it => `
       <div class="item-card" onclick="showItemDetail('${it.id}')">
         <img src="${it.thumbnail_url || it.original_url}" alt="${it.title || it.category}" loading="lazy">
         <div class="item-meta">

@@ -96,7 +96,9 @@ async function sendChat() {
     localStorage.setItem('chat_count', String(cnt));
   } catch(e) {}
   try {
-    const resp = await chatWithAI(msg, getChatSessionId());
+    // Send last 10 messages as context for multi-turn conversation
+    const context = chatHistory.slice(-11, -1).map(m => ({ role: m.role, content: m.content }));
+    const resp = await chatWithAI(msg, getChatSessionId(), context);
     document.getElementById('typing-indicator')?.remove();
     chatHistory.push({role:'assistant', content: resp.reply || '(无回复)', ts: Math.floor(Date.now()/1000)});
     renderChatMessages();

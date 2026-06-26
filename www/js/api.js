@@ -226,12 +226,12 @@ async function getHealthArticle(id) {
    AI 对话 API
    ════════════════════════════════════════════ */
 
-async function chatWithAI(message, sessionId) {
+async function chatWithAI(message, sessionId, context = []) {
   if (_devGuard('chatWithAI')) return _mockResponse({ reply: '(dev模式) 连接服务器后可用' });
   const res = await fetch(`${window.API_BASE}/api/chat`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ message, session_id: sessionId }),
+    body: JSON.stringify({ message, session_id: sessionId, context }),
   });
   if (!res.ok) throw new Error(`AI chat failed: HTTP ${res.status}`);
   const data = await res.json();
