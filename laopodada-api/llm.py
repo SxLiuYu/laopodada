@@ -1,15 +1,19 @@
-"""LLM client - call atlas /api/chat and validate JSON output."""
+"""LLM client - call llm-router /v1/chat/completions (OpenAI-compatible)."""
 from typing import Optional
 import hashlib
 import json
 import logging
+import os
 import time
 import uuid
 
 import urllib.request
 
-ATLAS_BASE = "http://127.0.0.1:18793"
+LLM_ROUTER_BASE = "http://127.0.0.1:8200"
 CACHE_TTL_SEC = 3600  # 1 hour
+
+# Bearer token for llm-router auth — set via env LLM_ROUTER_BEARER in systemd/service
+BEARER_TOKEN = os.environ.get("LLM_ROUTER_BEARER", "minimaxi-default")
 
 _cache: dict[str, tuple[float, str]] = {}
 
@@ -18,45 +22,86 @@ def _cache_key(prefix: str, payload: str) -> str:
     return f"{prefix}:{hashlib.sha256(payload.encode()).hexdigest()[:16]}"
 
 
-def call_atlas(message: str, session_prefix: str = "gen", timeout: int = 60) -> str:
-    """Call atlas /api/chat. Returns raw reply text."""
+def call_llm(
+    message: str,
+    session_prefix: str = "gen",
+    model: str = "auto",
+    timeout: int = 90,
+) -> str:
+    """Call llm-router /v1/chat/completions. Returns raw reply text.
+
+    Uses model="auto" for difficulty-based routing (via llm-router).
+    If `message` is a plain string, sends as single user message.
+    """
     session_id = f"{session_prefix}-{uuid.uuid4().hex[:8]}"
 
     body = json.dumps({
-        "message": message,
-        "session_id": session_id,
+        "model": model,
+        "messages": [
+            {"role": "user", "content": message},
+        ],
     }).encode()
 
     req = urllib.request.Request(
-        f"{ATLAS_BASE}/api/chat",
+        f"{LLM_ROUTER_BASE}/v1/chat/completions",
         data=body,
-        headers={"Content-Type": "application/json"},
+        headers={
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {BEARER_TOKEN}",
+        },
         method="POST",
     )
 
     try:
         with urllib.request.urlopen(req, timeout=timeout) as resp:
             data = json.loads(resp.read())
-            return data.get("reply", "")
+            choices = data.get("choices", [])
+            if choices:
+                return choices[0].get("message", {}).get("content", "")
+            return ""
     except Exception as e:
-        logging.error(f"atlas call failed: {e}")
-        raise RuntimeError(f"atlas call failed: {e}")
+        logging.error(f"llm-router call failed: {e}")
+        raise RuntimeError(f"llm-router call failed: {e}")
 
 
 def cached_call(prefix: str, query: str, system: str) -> str:
-    """Call atlas with 1-hour cache by query hash.
+    """Call llm-router with 1-hour cache by query+system hash.
 
-    system prompt is prepended to the query (atlas /api/chat does not have
-    a separate system field, so we send it as part of the user message).
+    Sends system as a proper system message (separate from user message).
     """
     key = _cache_key(prefix, query + "|" + system)
     now = time.time()
     if key in _cache and (now - _cache[key][0]) < CACHE_TTL_SEC:
         return _cache[key][1]
 
-    # prepend system to message as atlas doesn't support a separate system field
-    full_message = f"{system}\n\n{query}"
-    reply = call_atlas(full_message, session_prefix=prefix)
+    session_id = f"{prefix}-{uuid.uuid4().hex[:8]}"
+    body = json.dumps({
+        "model": "auto",
+        "messages": [
+            {"role": "system", "content": system},
+            {"role": "user", "content": query},
+        ],
+    }).encode()
+
+    req = urllib.request.Request(
+        f"{LLM_ROUTER_BASE}/v1/chat/completions",
+        data=body,
+        headers={
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {BEARER_TOKEN}",
+        },
+        method="POST",
+    )
+
+    try:
+        with urllib.request.urlopen(req, timeout=90) as resp:
+            data = json.loads(resp.read())
+            choices = data.get("choices", [])
+            reply = choices[0].get("message", {}).get("content", "") if choices else ""
+    except Exception as e:
+        logging.error(f"llm-router cached_call failed: {e}")
+        raise RuntimeError(f"llm-router call failed: {e}")
+
     _cache[key] = (now, reply)
     return reply
 
