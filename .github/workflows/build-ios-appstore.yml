@@ -50,41 +50,41 @@ jobs:
             -configuration Release \
             -sdk iphoneos \
             -destination 'generic/platform=iOS' \
-            -archivePath build/App.xcarchive \
+            -archivePath "${GITHUB_WORKSPACE}/ios/App/build/App.xcarchive" \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
-            | tail -80
+            2>&1 | tee /tmp/archive.log | tail -80
 
-      - name: Verify archive exists
+      - name: Verify archive
         run: |
           echo "=== Checking xcarchive ==="
-          ls -la ios/App/build/App.xcarchive || echo "xcarchive NOT FOUND"
-          find ios/App/build -name "*.xcarchive" -type d 2>/dev/null
+          test -f "${GITHUB_WORKSPACE}/ios/App/build/App.xcarchive/Products/App.app" && echo "FOUND" || echo "NOT FOUND"
+          ls -la "${GITHUB_WORKSPACE}/ios/App/build/" 2>/dev/null || echo "build dir not found"
+          find "${GITHUB_WORKSPACE}/ios/App" -name "*.xcarchive" -type d 2>/dev/null || echo "no xcarchive found"
 
       - name: Export IPA
         working-directory: ios/App
         run: |
           xcodebuild -exportArchive \
-            -archivePath build/App.xcarchive \
-            -exportPath build/ios \
-            -exportOptionsPlist exportOptions.plist
+            -archivePath "${GITHUB_WORKSPACE}/ios/App/build/App.xcarchive" \
+            -exportPath "${GITHUB_WORKSPACE}/ios/App/build/ios" \
+            -exportOptionsPlist exportOptions.plist \
+            2>&1 | tee /tmp/export.log
 
       - name: Create IPA from .app
         run: |
-          echo "=== Finding .app ==="
-          APP_PATH=$(find ios/App/build -name "*.app" -type d | head -1)
-          echo "App path: $APP_PATH"
+          APP_PATH=$(find "${GITHUB_WORKSPACE}/ios/App/build" -name "*.app" -type d | head -1)
+          echo "Found app: $APP_PATH"
           if [ -z "$APP_PATH" ]; then
-            echo "ERROR: No .app found in ios/App/build"
-            find ios/App/build -type f
+            echo "ERROR: No .app found"
+            find "${GITHUB_WORKSPACE}/ios/App/build" -type f
             exit 1
           fi
           mkdir -p Payload
           cp -r "$APP_PATH" Payload/
-          zip -r laopodada.ipa Payload/
+          zip -r "${GITHUB_WORKSPACE}/laopodada.ipa" Payload/
           rm -rf Payload
-          ls -la laopodada.ipa
-          file laopodada.ipa
+          ls -la "${GITHUB_WORKSPACE}/laopodada.ipa"
 
       - name: Upload IPA artifact
         uses: actions/upload-artifact@v4
