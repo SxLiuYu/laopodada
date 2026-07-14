@@ -51,9 +51,10 @@ jobs:
             -sdk iphoneos \
             -destination 'generic/platform=iOS' \
             -archivePath build/App.xcarchive \
-            CODE_SIGN_IDENTITY="-" \
+            CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
-            PROVISIONING_PROFILE_SPECIFIER=""
+            PROVISIONING_PROFILE_SPECIFIER="" \
+            2>&1 | tee /tmp/archive.log | tail -40
 
       - name: Export IPA
         working-directory: ios/App
@@ -61,28 +62,23 @@ jobs:
           xcodebuild -exportArchive \
             -archivePath build/App.xcarchive \
             -exportPath build/ios \
-            -exportOptionsPlist exportOptions.plist
+            -exportOptionsPlist exportOptions.plist \
+            2>&1 | tee /tmp/export.log | tail -20
 
       - name: Build IPA
         working-directory: ios/App/build/ios
         run: |
-          echo "=== Listing build/ios ==="
+          echo "=== Files ==="
           ls -la
-          echo "=== Finding .app ==="
-          APP=$(ls -d *.app 2>/dev/null | head -1)
-          echo "App: $APP"
-          if [ -z "$APP" ]; then
-            echo "No .app found!"
-            exit 1
-          fi
+          echo "=== App ==="
+          ls -d *.app
           mkdir -p Payload
-          cp -r "$APP" Payload/
+          cp -r *.app Payload/
           echo "=== Creating IPA ==="
-          cd "${GITHUB_WORKSPACE}"
-          ditto -c -k --sequesterRsrc --keepParent ios/App/build/ios/Payload laopodada.ipa
-          echo "=== IPA created ==="
-          ls -la laopodada.ipa
-          rm -rf ios/App/build/ios/Payload
+          ditto -c -k --sequesterRsrc --keepParent "${GITHUB_WORKSPACE}/ios/App/build/ios/Payload" "${GITHUB_WORKSPACE}/laopodada.ipa"
+          echo "=== Done ==="
+          ls -la "${GITHUB_WORKSPACE}/laopodada.ipa"
+          rm -rf "${GITHUB_WORKSPACE}/ios/App/build/ios/Payload"
 
       - name: Upload IPA artifact
         uses: actions/upload-artifact@v4
