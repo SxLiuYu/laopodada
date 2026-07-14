@@ -66,19 +66,31 @@ jobs:
             2>&1 | tee /tmp/export.log | tail -20
 
       - name: Build IPA
-        working-directory: ios/App/build/ios
         run: |
-          echo "=== Files ==="
-          ls -la
-          echo "=== App ==="
-          ls -d *.app
-          mkdir -p Payload
-          cp -r *.app Payload/
-          echo "=== Creating IPA ==="
-          ditto -c -k --sequesterRsrc --keepParent "${GITHUB_WORKSPACE}/ios/App/build/ios/Payload" "${GITHUB_WORKSPACE}/laopodada.ipa"
+          echo "=== Searching for .app ==="
+          APP=$(find ios/App/build -name "*.app" -type d | head -1)
+          echo "Found: $APP"
+          if [ -z "$APP" ]; then
+            echo "ERROR: No .app found!"
+            find ios/App/build -type f
+            exit 1
+          fi
+          echo "=== Creating IPA with Python ==="
+          python -c "
+          import zipfile, os, shutil
+          app = '$APP'
+          payload = 'Payload/' + os.path.basename(app)
+          os.makedirs('Payload', exist_ok=True)
+          shutil.copytree(app, payload)
+          with zipfile.ZipFile('laopodada.ipa', 'w', zipfile.ZIP_DEFLATED) as zf:
+              for root, dirs, files in os.walk('Payload'):
+                  for f in files:
+                      zf.write(os.path.join(root, f), os.path.join('Payload', root[len('Payload'):], f))
+          shutil.rmtree('Payload')
+          print('IPA created successfully')
+          "
+          ls -la laopodada.ipa
           echo "=== Done ==="
-          ls -la "${GITHUB_WORKSPACE}/laopodada.ipa"
-          rm -rf "${GITHUB_WORKSPACE}/ios/App/build/ios/Payload"
 
       - name: Upload IPA artifact
         uses: actions/upload-artifact@v4
