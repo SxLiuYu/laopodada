@@ -54,29 +54,29 @@ jobs:
             CODE_SIGN_STYLE=Manual \
             CODE_SIGN_IDENTITY="Apple Distribution" \
             PROVISIONING_PROFILE_SPECIFIER="match AppStore com.laopodada.app" \
-            | tee /tmp/archive.log | tail -80
+            | tail -80
 
       - name: Export IPA
         working-directory: ios/App
         run: |
+          mkdir -p build/ipa
           xcodebuild -exportArchive \
             -archivePath build/App.xcarchive \
-            -exportPath build/export \
+            -exportPath build/ipa/App.ipa \
             -exportOptionsPlist exportOptions.plist \
-            | tee /tmp/export.log | tail -30
+            | tail -30
 
-      - name: Debug export output
+      - name: Verify IPA
+        working-directory: ios/App
         run: |
-          echo "=== Export log ==="
-          cat /tmp/export.log
-          echo "=== IPA file check ==="
-          ls -la ios/App/build/export/
-          find ios/App/build/export -name "*.ipa" -o -name "*.app"
+          ls -la build/ipa/
+          file build/ipa/App.ipa || echo "IPA not found, searching..."
+          find build -name "*.ipa" -type f 2>/dev/null || echo "No IPA found"
 
       - name: Upload IPA artifact
         uses: actions/upload-artifact@v4
         with:
           name: laopodada-ipa-${{ github.event.inputs.version }}
-          path: ios/App/build/export/App.ipa
+          path: ios/App/build/ipa/App.ipa
           retention-days: 30
-          if-no-files-found: warn
+          if-no-files-found: error
