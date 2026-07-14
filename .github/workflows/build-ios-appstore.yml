@@ -57,10 +57,8 @@ jobs:
 
       - name: Verify archive
         run: |
-          echo "=== Checking xcarchive ==="
-          test -f "${GITHUB_WORKSPACE}/ios/App/build/App.xcarchive/Products/App.app" && echo "FOUND" || echo "NOT FOUND"
-          ls -la "${GITHUB_WORKSPACE}/ios/App/build/" 2>/dev/null || echo "build dir not found"
-          find "${GITHUB_WORKSPACE}/ios/App" -name "*.xcarchive" -type d 2>/dev/null || echo "no xcarchive found"
+          test -d "${GITHUB_WORKSPACE}/ios/App/build/App.xcarchive" && echo "xcarchive OK" || echo "xcarchive MISSING"
+          ls "${GITHUB_WORKSPACE}/ios/App/build/App.xcarchive/Products/"
 
       - name: Export IPA
         working-directory: ios/App
@@ -71,20 +69,24 @@ jobs:
             -exportOptionsPlist exportOptions.plist \
             2>&1 | tee /tmp/export.log
 
-      - name: Create IPA from .app
+      - name: Create IPA
         run: |
-          APP_PATH=$(find "${GITHUB_WORKSPACE}/ios/App/build" -name "*.app" -type d | head -1)
-          echo "Found app: $APP_PATH"
-          if [ -z "$APP_PATH" ]; then
-            echo "ERROR: No .app found"
-            find "${GITHUB_WORKSPACE}/ios/App/build" -type f
+          cd "${GITHUB_WORKSPACE}/ios/App/build/ios"
+          ls -la
+          APP_FILE=$(ls *.app 2>/dev/null | head -1)
+          echo "App: $APP_FILE"
+          if [ -z "$APP_FILE" ]; then
+            echo "ERROR: No .app found in build/ios"
+            ls -la
             exit 1
           fi
           mkdir -p Payload
-          cp -r "$APP_PATH" Payload/
-          zip -r "${GITHUB_WORKSPACE}/laopodada.ipa" Payload/
+          cp -r "$APP_FILE" Payload/
+          cd "${GITHUB_WORKSPACE}"
+          zip -r laopodada.ipa Payload/
           rm -rf Payload
-          ls -la "${GITHUB_WORKSPACE}/laopodada.ipa"
+          ls -la laopodada.ipa
+          file laopodada.ipa
 
       - name: Upload IPA artifact
         uses: actions/upload-artifact@v4
