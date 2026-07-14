@@ -67,15 +67,20 @@ jobs:
 
       - name: Find .app
         id: find_app
+        working-directory: ios/App
         run: |
-          APP=$(find ios/App/build -name "*.app" -type d | head -1)
-          echo "Found app: $APP"
-          echo "app_path=$APP" >> "$GITHUB_OUTPUT"
+          echo "=== Searching for .app in build/ ==="
+          APP=$(find build -name "*.app" -type d 2>/dev/null | head -1)
+          echo "found=$APP"
           if [ -z "$APP" ]; then
-            echo "ERROR: No .app found!"
-            find ios/App/build -type f
+            echo "=== build/ contents ==="
+            find build -type f 2>/dev/null
+            echo "=== All dirs ==="
+            ls -laR build/ios/ 2>/dev/null || echo "no build/ios/"
             exit 1
           fi
+          echo "app_path=ios/App/$APP" >> "$GITHUB_OUTPUT"
+          echo "Found: ios/App/$APP"
 
       - name: Build IPA
         run: |
