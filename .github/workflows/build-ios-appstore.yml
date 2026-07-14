@@ -53,8 +53,7 @@ jobs:
             -archivePath build/App.xcarchive \
             CODE_SIGN_IDENTITY="-" \
             CODE_SIGNING_REQUIRED=NO \
-            PROVISIONING_PROFILE_SPECIFIER="" \
-            2>&1 | tee /tmp/archive.log
+            PROVISIONING_PROFILE_SPECIFIER=""
 
       - name: Export IPA
         working-directory: ios/App
@@ -62,22 +61,27 @@ jobs:
           xcodebuild -exportArchive \
             -archivePath build/App.xcarchive \
             -exportPath build/ios \
-            -exportOptionsPlist exportOptions.plist \
-            2>&1 | tee /tmp/export.log
+            -exportOptionsPlist exportOptions.plist
 
-      - name: Build IPA payload
+      - name: Build IPA
         working-directory: ios/App/build/ios
         run: |
-          echo "=== Files in build/ios ==="
+          echo "=== Listing build/ios ==="
           ls -la
-          echo "=== App bundle ==="
-          ls *.app
+          echo "=== Finding .app ==="
+          APP=$(ls -d *.app 2>/dev/null | head -1)
+          echo "App: $APP"
+          if [ -z "$APP" ]; then
+            echo "No .app found!"
+            exit 1
+          fi
           mkdir -p Payload
-          cp -r *.app Payload/
+          cp -r "$APP" Payload/
+          echo "=== Creating IPA ==="
           cd "${GITHUB_WORKSPACE}"
           ditto -c -k --sequesterRsrc --keepParent ios/App/build/ios/Payload laopodada.ipa
+          echo "=== IPA created ==="
           ls -la laopodada.ipa
-          file laopodada.ipa
           rm -rf ios/App/build/ios/Payload
 
       - name: Upload IPA artifact
