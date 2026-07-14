@@ -1,6 +1,6 @@
 name: Build iOS (Capacitor)
 
-"on":
+on:
   push:
     branches: [main]
     paths:
