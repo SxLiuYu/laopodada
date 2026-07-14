@@ -1,4 +1,4 @@
-/* www/js/bookkeeping.js — 记账模块 */
+/* www/js/bookkeeping.js — 增强版记账模块 */
 
 const BK_CATEGORIES = {
   food: { label: '餐饮', icon: '🍜' },

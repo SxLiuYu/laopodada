@@ -8,26 +8,95 @@
   <link rel="stylesheet" href="css/ai-fab.css">
   <link rel="stylesheet" href="css/recommend.css">
   <link rel="stylesheet" href="css/main-page.css">
+  <link rel="stylesheet" href="css/main-page-enhanced.css">
+  <link rel="stylesheet" href="css/bookkeeping.css">
+  <link rel="stylesheet" href="css/ai-assistant.css">
 </head>
 <body>
 <div id="app">
-  <div id="page-main"       class="page" style="display:none;"></div>
-  <div id="page-wardrobe"   class="page" style="display:none;"></div>
-  <div id="page-recommend"  class="page" style="display:none;"></div>
-  <div id="page-recipe"     class="page" style="display:none;"></div>
-  <div id="page-bookkeeping" class="page" style="display:none;"></div>
-  <div id="page-profile"    class="page" style="display:none;"></div>
+  <!-- 主页 -->
+  <div id="page-main" class="page" style="display:none;">
+    <div class="page-header">👋 早安,老婆</div>
+    <div class="weather-widget" id="weather-widget">
+      <div class="skeleton skeleton-text" style="width:100px;height:16px;margin:8px auto;"></div>
+    </div>
+    <div class="quick-actions">
+      <div class="action-card" data-action="wardrobe">
+        <div class="action-icon">👗</div>
+        <div class="action-text">今日穿搭</div>
+      </div>
+      <div class="action-card" data-action="recipe">
+        <div class="action-icon">🍳</div>
+        <div class="action-text">今天吃啥</div>
+      </div>
+      <div class="action-card" data-action="bookkeeping">
+        <div class="action-icon">💰</div>
+        <div class="action-text">快速记账</div>
+      </div>
+    </div>
+    <div class="stats-section" id="stats-section">
+      <h3>📊 本周统计</h3>
+      <div class="stats-grid" id="stats-grid">
+        <div class="skeleton skeleton-text" style="width:80px;height:16px;"></div>
+        <div class="skeleton skeleton-text short" style="width:60px;height:16px;"></div>
+      </div>
+    </div>
+    <div class="ai-suggestions" id="ai-suggestions">
+      <h3>✨ AI 小建议</h3>
+      <div id="ai-advice" class="advice-card">
+        <div class="skeleton skeleton-text" style="width:90%;height:16px;"></div>
+        <div class="skeleton skeleton-text short" style="width:70%;height:16px;margin-top:8px;"></div>
+      </div>
+    </div>
+  </div>
 
+  <!-- 衣橱 -->
+  <div id="page-wardrobe" class="page" style="display:none;"></div>
+  
+  <!-- 穿搭推荐 -->
+  <div id="page-recommend" class="page" style="display:none;"></div>
+  
+  <!-- 菜谱 -->
+  <div id="page-recipe" class="page" style="display:none;"></div>
+  
+  <!-- 记账 -->
+  <div id="page-bookkeeping" class="page" style="display:none;"></div>
+  
+  <!-- 我的 -->
+  <div id="page-profile" class="page" style="display:none;"></div>
+
+  <!-- 底部导航栏 -->
   <nav class="tabbar">
-    <div class="tab active" data-tab="main">主页</div>
-    <div class="tab" data-tab="wardrobe">衣橱</div>
-    <div class="tab" data-tab="recipe">点餐</div>
-    <div class="tab" data-tab="bookkeeping">记账</div>
-    <div class="tab" data-tab="profile">我的</div>
+    <div class="tab active" data-tab="main">
+      <span class="tab-icon">🏠</span>
+      <span class="tab-label">主页</span>
+    </div>
+    <div class="tab" data-tab="wardrobe">
+      <span class="tab-icon">👗</span>
+      <span class="tab-label">衣橱</span>
+    </div>
+    <div class="tab" data-tab="recipe">
+      <span class="tab-icon">🍳</span>
+      <span class="tab-label">菜谱</span>
+    </div>
+    <div class="tab" data-tab="bookkeeping">
+      <span class="tab-icon">💰</span>
+      <span class="tab-label">记账</span>
+    </div>
+    <div class="tab" data-tab="profile">
+      <span class="tab-icon">👤</span>
+      <span class="tab-label">我的</span>
+    </div>
   </nav>
 
+  <!-- AI 浮动按钮 -->
+  <button id="ai-fab-global" class="ai-fab-global">✨</button>
+
+  <!-- Toast 提示 -->
   <div id="toast"></div>
 </div>
+
+<!-- 脚本引用 -->
 <script src="js/config.js"></script>
 <script src="js/utils.js"></script>
 <script src="js/api.js"></script>
@@ -41,8 +110,9 @@
 <script src="js/ai-fab.js"></script>
 <script src="js/main-page.js"></script>
 <script src="js/app.js"></script>
+
+<!-- Service Worker -->
 <script>
-// Register Service Worker for offline caching
 if ('serviceWorker' in navigator && !window.IS_DEV) {
   navigator.serviceWorker.register('/sw.js').catch(() => {});
 }

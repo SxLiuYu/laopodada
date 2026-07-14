@@ -14,3 +14,22 @@ window.IS_DEV = (function() {
   if (location.port && /^8\d{3}$/.test(location.port)) return true;
   return false;
 })();
+
+// 功能开关
+window.FEATURES = {
+  WEATHER: true,        // 天气功能
+  AI_ASSISTANT: true,   // AI助手
+  BOOKKEEPING: true,    // 记账功能
+  WARDROBE: true,       // 衣橱功能
+  RECIPE: true,         // 菜谱功能
+  HEALTH_ARTICLES: false // 健康文章（已移除）
+};
+
+// 应用配置
+window.APP_CONFIG = {
+  NAME: '老婆哒哒',
+  VERSION: '2.0.0',
+  DESCRIPTION: '你的日常生活助手',
+  AUTHOR: 'SxLiuYu',
+  SUPPORT_EMAIL: 'support@laopodada.com'
+};

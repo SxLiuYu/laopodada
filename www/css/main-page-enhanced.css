@@ -1,0 +1,165 @@
+/* 主页增强样式 */
+.page-header {
+  font-size: 24px;
+  font-weight: 700;
+  padding: 16px;
+  background: linear-gradient(135deg, #ff9a9e 0%, #fad0c4 100%);
+  color: white;
+  text-align: center;
+  border-radius: 0 0 20px 20px;
+  margin-bottom: 16px;
+}
+
+.weather-widget {
+  background: rgba(255,255,255,0.9);
+  border-radius: 12px;
+  padding: 12px;
+  margin: 0 16px 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  text-align: center;
+}
+
+.quick-actions {
+  display: flex;
+  justify-content: space-around;
+  padding: 0 16px 16px;
+  gap: 12px;
+}
+
+.action-card {
+  flex: 1;
+  background: white;
+  border-radius: 12px;
+  padding: 16px 8px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  transition: transform 0.2s ease;
+  cursor: pointer;
+}
+
+.action-card:active {
+  transform: scale(0.95);
+}
+
+.action-icon {
+  font-size: 24px;
+  margin-bottom: 8px;
+}
+
+.action-text {
+  font-size: 12px;
+  color: #666;
+  font-weight: 500;
+}
+
+.stats-section {
+  padding: 0 16px 16px;
+}
+
+.stats-section h3 {
+  margin: 0 0 12px;
+  font-size: 16px;
+  color: #333;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.stat-card {
+  background: white;
+  border-radius: 12px;
+  padding: 12px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.stat-value {
+  font-size: 20px;
+  font-weight: 700;
+  color: #ff6b6b;
+  margin-bottom: 4px;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: #666;
+}
+
+.ai-suggestions {
+  padding: 0 16px 16px;
+}
+
+.ai-suggestions h3 {
+  margin: 0 0 12px;
+  font-size: 16px;
+  color: #333;
+}
+
+.advice-card {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 4px 12px rgba(102,126,234,0.3);
+}
+
+.advice-text {
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.advice-source {
+  font-size: 12px;
+  opacity: 0.8;
+  margin-top: 8px;
+  text-align: right;
+}
+
+/* AI FAB 全局按钮 */
+.ai-fab-global {
+  position: fixed;
+  bottom: 80px;
+  right: 20px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  font-size: 24px;
+  box-shadow: 0 4px 12px rgba(102,126,234,0.4);
+  cursor: pointer;
+  z-index: 1000;
+  transition: all 0.3s ease;
+}
+
+.ai-fab-global:active {
+  transform: scale(0.9);
+}
+
+/* Tab 图标样式 */
+.tab-icon {
+  display: block;
+  font-size: 20px;
+  margin-bottom: 2px;
+}
+
+.tab-label {
+  font-size: 10px;
+}
+
+/* 响应式调整 */
+@media (min-width: 768px) {
+  .quick-actions {
+    max-width: 600px;
+    margin: 0 auto;
+  }
+  
+  .stats-grid {
+    max-width: 600px;
+    margin: 0 auto;
+  }
+}
