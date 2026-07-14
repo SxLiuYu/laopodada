@@ -54,7 +54,7 @@ jobs:
             CODE_SIGN_STYLE=Manual \
             CODE_SIGN_IDENTITY="Apple Distribution" \
             PROVISIONING_PROFILE_SPECIFIER="match AppStore com.laopodada.app" \
-            | tail -80
+            | tee /tmp/archive.log | tail -80
 
       - name: Export IPA
         working-directory: ios/App
@@ -63,7 +63,15 @@ jobs:
             -archivePath build/App.xcarchive \
             -exportPath build/export \
             -exportOptionsPlist exportOptions.plist \
-            | tail -30
+            | tee /tmp/export.log | tail -30
+
+      - name: Debug export output
+        run: |
+          echo "=== Export log ==="
+          cat /tmp/export.log
+          echo "=== IPA file check ==="
+          ls -la ios/App/build/export/
+          find ios/App/build/export -name "*.ipa" -o -name "*.app"
 
       - name: Upload IPA artifact
         uses: actions/upload-artifact@v4
@@ -71,13 +79,4 @@ jobs:
           name: laopodada-ipa-${{ github.event.inputs.version }}
           path: ios/App/build/export/App.ipa
           retention-days: 30
-          if-no-files-found: error
-
-      - name: Upload to App Store Connect (optional)
-        if: false  # Enable when ASC credentials are configured
-        run: |
-          xcrun altool --upload-app \
-            --type ios \
-            --file ios/App/build/export/App.ipa \
-            --username "${{ secrets.APPLE_ID }}" \
-            --password "${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}"
+          if-no-files-found: warn
