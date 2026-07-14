@@ -59,17 +59,30 @@ jobs:
       - name: Export IPA
         working-directory: ios/App
         run: |
-          mkdir -p build/ipa
           xcodebuild -exportArchive \
             -archivePath build/App.xcarchive \
-            -exportPath build/ipa \
-            -exportOptionsPlist exportOptions.plist \
-            | tail -30
+            -exportPath build/ios \
+            -exportOptionsPlist exportOptions.plist
 
-      - name: Copy IPA to root for artifact upload
+      - name: Find IPA
         run: |
-          find ios/App/build -name "*.ipa" -type f
-          cp $(find ios/App/build -name "*.ipa" -type f) ./laopodada.ipa
+          echo "=== Searching for IPA ==="
+          find ios/App/build -name "*.ipa" -type f 2>/dev/null || echo "No .ipa found"
+          echo "=== Searching for .app ==="
+          find ios/App/build -name "*.app" -type f 2>/dev/null || echo "No .app found"
+          echo "=== Directory listing ==="
+          ls -laR ios/App/build/ios/ 2>/dev/null || echo "No ios/ dir"
+          ls -laR ios/App/build/ 2>/dev/null | head -40
+
+      - name: Copy IPA to root
+        run: |
+          IPA_PATH=$(find ios/App/build -name "*.ipa" -type f | head -1)
+          if [ -z "$IPA_PATH" ]; then
+            echo "ERROR: No .ipa file found!"
+            exit 1
+          fi
+          echo "Found IPA: $IPA_PATH"
+          cp "$IPA_PATH" ./laopodada.ipa
           ls -la ./laopodada.ipa
 
       - name: Upload IPA artifact
