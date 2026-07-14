@@ -15,12 +15,12 @@ function renderProfilePage() {
         <div class="stat-lbl">菜谱</div>
       </div>
       <div class="stat-card">
-        <div class="stat-num" id="stat-health">–</div>
-        <div class="stat-lbl">健康已读</div>
+        <div class="stat-num" id="stat-expenses">–</div>
+        <div class="stat-lbl">记账笔数</div>
       </div>
       <div class="stat-card">
-        <div class="stat-num" id="stat-chat">–</div>
-        <div class="stat-lbl">AI 对话</div>
+        <div class="stat-num" id="stat-expense-month">–</div>
+        <div class="stat-lbl">本月支出</div>
       </div>
     </div>
 
@@ -68,25 +68,19 @@ function renderProfilePage() {
 
 async function loadProfileStats() {
   try {
-    const [itemsData, recipesData, outfitsData] = await Promise.all([
+    const [itemsData, recipesData, expData, sumData, outfitsData] = await Promise.all([
       listItems(null, 1),
       listRecipes(undefined, undefined, undefined, 1),
+      listExpenses('', '', 1),
+      expensesSummary(new Date().toISOString().slice(0, 7)),
       listOutfits(20),
     ]);
-    const totalItems = itemsData.count || 0;
-    const totalRecipes = recipesData.count || recipesData.total || 0;
-    const outfits = outfitsData.outfits || [];
-    document.getElementById('stat-items').textContent = totalItems;
-    document.getElementById('stat-recipes').textContent = totalRecipes;
-    try {
-      const readIds = JSON.parse(localStorage.getItem('health_read_ids') || '[]');
-      document.getElementById('stat-health').textContent = readIds.length;
-    } catch(e) { document.getElementById('stat-health').textContent = 0; }
-    try {
-      const chatCnt = parseInt(localStorage.getItem('chat_count') || '0');
-      document.getElementById('stat-chat').textContent = chatCnt;
-    } catch(e) { document.getElementById('stat-chat').textContent = 0; }
+    document.getElementById('stat-items').textContent = itemsData.count || 0;
+    document.getElementById('stat-recipes').textContent = recipesData.count || recipesData.total || 0;
+    document.getElementById('stat-expenses').textContent = expData.count || 0;
+    document.getElementById('stat-expense-month').textContent = '¥' + ((sumData.total || 0).toFixed(0));
 
+    const outfits = outfitsData.outfits || [];
     const list = document.getElementById('history-list');
     if (!outfits.length) {
       list.innerHTML = `<div class="empty-state"><span class="emoji">📋</span>还没有推荐记录</div>`;
@@ -163,7 +157,7 @@ function showAbout() {
       <div style="font-size:var(--fs-sm);color:var(--text-hint);margin-bottom:var(--sp-4);">v1.1.0</div>
       <div style="font-size:var(--fs-base);color:var(--text-secondary);line-height:1.6;">
         一个私人助理 App<br>
-        衣橱管理 · 点餐决策 · 健康科普 · AI 闲聊
+        衣橱管理 · 点餐决策 · 记账 · AI 穿搭
       </div>
       <button class="btn-primary" style="margin-top:var(--sp-4);max-width:200px;" onclick="this.closest('.overlay').remove()">知道了</button>
     </div>

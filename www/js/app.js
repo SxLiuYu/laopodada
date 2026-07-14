@@ -18,8 +18,7 @@ function switchTab(tabKey) {
     else if (tabKey === 'wardrobe') renderWardrobePage();
     else if (tabKey === 'recommend') renderRecommendPage();
     else if (tabKey === 'recipe') renderRecipePage();
-    else if (tabKey === 'health') renderHealthPage();
-    else if (tabKey === 'chat') renderChatPage();
+    else if (tabKey === 'bookkeeping') renderBookkeepingPage();
     else if (tabKey === 'profile') renderProfilePage();
   }
   // tab 样式
@@ -35,6 +34,22 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   // 默认进主页
   switchTab('main');
+
+  // 全局 AI FAB - 悬浮按钮,所有页面可见
+  AIFab.init('global', () => {
+    AIFab.openSheet({
+      title: '✨ AI 小助手',
+      placeholder: '比如：帮我搭配今天穿什么、推荐一道菜、问问最近开销...',
+      onSubmit: async (text) => {
+        const result = await chatWithAI(
+          text,
+          localStorage.getItem('chat_session_id') || ('web-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8))
+        );
+        localStorage.setItem('chat_session_id', result.session_id || '');
+        return { html: `<div class="ai-result-card"><div class="ai-content">${escapeHtml(result.reply || '(无回复)')}</div></div>` };
+      },
+    });
+  });
 });
 
 // 全局 JS 错误捕获 — 任何 script 抛错都打 console,方便 iOS Safari 远程调试

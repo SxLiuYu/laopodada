@@ -23,15 +23,15 @@ async function renderMainPage() {
 
   // 异步加载统计,骨架屏替换为真实卡片
   try {
-    const [w, r, h] = await Promise.all([
+    const [w, r, b] = await Promise.all([
       listItems(null, 50).catch(e => { console.warn('[stats] listItems:', e.message); return { items: [] }; }),
       listRecipes(undefined, undefined, undefined, 50).catch(e => { console.warn('[stats] listRecipes:', e.message); return { recipes: [] }; }),
-      listHealthArticles(undefined, 50).catch(e => { console.warn('[stats] listHealthArticles:', e.message); return { articles: [] }; }),
+      listExpenses(undefined, undefined, 50).catch(e => { console.warn('[stats] listExpenses:', e.message); return { expenses: [], count: 0 }; }),
     ]);
     const stats = {
       wardrobe: (w.items || []).length,
       recipe: (r.recipes || []).length,
-      health: (h.articles || []).length,
+      bookkeeping: b.count || (b.expenses || []).length,
     };
 
     // 用真实数据替换骨架屏
@@ -63,12 +63,12 @@ async function renderMainPage() {
         </div>
       </div>
 
-      <div class="main-card main-card-health" data-goto="health">
-        <div class="main-card-icon">💪</div>
+      <div class="main-card main-card-bookkeeping" data-goto="bookkeeping">
+        <div class="main-card-icon">💰</div>
         <div class="main-card-body">
-          <h4>健康</h4>
-          <p class="main-card-stat">${stats.health} 篇文章 · 想了解啥?</p>
-          <div class="main-card-tag">✨ AI 健康科普</div>
+          <h4>记账</h4>
+          <p class="main-card-stat">${stats.bookkeeping} 笔记录 · 花哪儿了?</p>
+          <div class="main-card-tag">✨ 本月收支一目了然</div>
         </div>
       </div>
     `;

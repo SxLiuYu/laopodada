@@ -506,3 +506,63 @@ html, body { height: 100%; font-family: var(--font-sans); color: var(--text-prim
 .ai-content { background: #f8f8f8; border: 1px solid var(--border); border-radius: var(--r-sm); padding: 10px; font-size: var(--fs-base); line-height: 1.6; white-space: pre-wrap; word-break: break-word; overflow-x: auto; max-height: 300px; overflow-y: auto; margin: 6px 0; color: var(--text-primary); }
 .ai-meta { font-size: var(--fs-sm); color: var(--text-placeholder); margin-top: var(--sp-2); }
 .ai-card { border: 2px solid var(--ai-purple) !important; }
+
+/* ── Bookkeeping ── */
+.bk-summary {
+  padding: var(--sp-4) var(--sp-3);
+  text-align: center;
+  background: var(--bg-white);
+  margin: 0 var(--sp-3) var(--sp-2);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-sm);
+}
+.bk-total-label { font-size: var(--fs-base); color: var(--text-hint); margin-bottom: 4px; }
+.bk-total-amount {
+  font-size: 36px;
+  font-weight: 700;
+  background: var(--gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.bk-total-cats { font-size: var(--fs-sm); color: var(--text-secondary); margin-top: 6px; }
+.bk-list { padding: 0 var(--sp-3) 80px; }
+.bk-item {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  background: var(--bg-white);
+  border-radius: var(--r-md);
+  padding: var(--sp-3);
+  margin-bottom: var(--sp-2);
+  box-shadow: var(--shadow-sm);
+  transition: transform .15s var(--ease);
+}
+.bk-item:active { transform: scale(.98); }
+.bk-item-icon { font-size: 28px; width: 40px; text-align: center; }
+.bk-item-body { flex: 1; min-width: 0; }
+.bk-item-cat { font-size: var(--fs-md); color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bk-item-date { font-size: var(--fs-sm); color: var(--text-hint); margin-top: 2px; }
+.bk-item-amount { font-size: var(--fs-lg); font-weight: 600; color: var(--error); white-space: nowrap; }
+.bk-item-del {
+  font-size: 18px;
+  color: var(--text-placeholder);
+  cursor: pointer;
+  padding: 0 4px;
+  line-height: 1;
+  transition: color .15s;
+}
+.bk-item-del:hover { color: var(--error); }
+.bk-add-bar {
+  position: fixed;
+  bottom: 56px;
+  left: 0;
+  right: 0;
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--bg);
+  z-index: 5;
+}
+.bk-add-bar .btn-primary {
+  max-width: 400px;
+  margin: 0 auto;
+}

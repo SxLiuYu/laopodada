@@ -185,6 +185,18 @@ def init_db() -> None:
         );
         CREATE INDEX IF NOT EXISTS idx_recommendations_session ON outfit_recommendations(session_id);
         CREATE INDEX IF NOT EXISTS idx_recommendations_created  ON outfit_recommendations(created_at DESC);
+
+        CREATE TABLE IF NOT EXISTS expenses (
+            id           TEXT PRIMARY KEY,
+            amount       REAL NOT NULL,
+            category     TEXT NOT NULL,
+            note         TEXT,
+            expense_date TEXT NOT NULL,
+            created_at   INTEGER NOT NULL,
+            updated_at   INTEGER NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS idx_expenses_date     ON expenses(expense_date DESC);
+        CREATE INDEX IF NOT EXISTS idx_expenses_category ON expenses(category);
     """)
     db.commit()
     db.close()
@@ -1785,6 +1797,131 @@ def generate_health_article():
         last_err = err
 
     return jsonify(error=f"AI 生成失败: {last_err}", reply_excerpt=last_reply[:200]), 422
+
+
+EXPENSE_CATEGORIES = {"food", "transport", "shopping", "entertainment", "housing", "health", "education", "beauty", "gift", "other"}
+
+# ---------- Expense (Bookkeeping) ----------
+def _row_to_expense(row) -> dict:
+    return {
+        "id": row["id"],
+        "amount": row["amount"],
+        "category": row["category"],
+        "note": row["note"] or "",
+        "expense_date": row["expense_date"],
+        "created_at": row["created_at"],
+        "created_at_iso": datetime.fromtimestamp(row["created_at"], tz=timezone.utc).isoformat(),
+        "updated_at": row["updated_at"],
+    }
+
+
+@app.get("/api/v1/expenses")
+def list_expenses():
+    """List expenses with optional date-range and category filter."""
+    db = get_db()
+    category = request.args.get("category", "").strip()
+    month = request.args.get("month", "").strip()  # YYYY-MM
+    limit = min(int(request.args.get("limit", 100)), 500)
+    offset = int(request.args.get("offset", 0))
+
+    where = []
+    params = []
+    if category and category in EXPENSE_CATEGORIES:
+        where.append("category = ?")
+        params.append(category)
+    if month and len(month) == 7:
+        where.append("expense_date LIKE ?")
+        params.append(f"{month}%")
+
+    sql = "SELECT * FROM expenses"
+    if where:
+        sql += " WHERE " + " AND ".join(where)
+    sql += " ORDER BY expense_date DESC, created_at DESC LIMIT ? OFFSET ?"
+    params.extend([limit, offset])
+
+    rows = db.execute(sql, params).fetchall()
+    count_row = db.execute(
+        "SELECT COUNT(*) as cnt FROM expenses" + (" WHERE " + " AND ".join(where) if where else ""),
+        params[:-2] if where else [],
+    ).fetchone()
+    return jsonify(count=count_row["cnt"] if count_row else 0, expenses=[_row_to_expense(r) for r in rows])
+
+
+@app.get("/api/v1/expenses/summary")
+def expenses_summary():
+    """Get monthly summary: total, by-category breakdown."""
+    db = get_db()
+    month = request.args.get("month", "").strip()
+    if not month or len(month) != 7:
+        month = datetime.now(timezone.utc).strftime("%Y-%m")
+
+    total_row = db.execute(
+        "SELECT COALESCE(SUM(amount), 0) as total FROM expenses WHERE expense_date LIKE ?",
+        (f"{month}%",),
+    ).fetchone()
+
+    cats = db.execute(
+        "SELECT category, COALESCE(SUM(amount), 0) as total FROM expenses WHERE expense_date LIKE ? GROUP BY category ORDER BY total DESC",
+        (f"{month}%",),
+    ).fetchall()
+
+    return jsonify(
+        month=month,
+        total=round(total_row["total"], 2) if total_row else 0,
+        breakdown=[{"category": c["category"], "amount": round(c["total"], 2)} for c in cats],
+    )
+
+
+@app.post("/api/v1/expenses")
+def create_expense():
+    """Add a new expense record."""
+    body = request.get_json(silent=True) or {}
+    amount = body.get("amount")
+    if amount is None:
+        abort(400, description="amount 必填")
+    try:
+        amount = round(float(amount), 2)
+    except (ValueError, TypeError):
+        abort(400, description="amount 必须是数字")
+    if amount <= 0:
+        abort(400, description="amount 必须大于 0")
+
+    category = (body.get("category") or "").strip()
+    if category not in EXPENSE_CATEGORIES:
+        abort(400, description=f"category 必须是: {', '.join(sorted(EXPENSE_CATEGORIES))}")
+
+    expense_date = (body.get("expense_date") or "").strip()
+    if not expense_date:
+        expense_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    # Validate date format YYYY-MM-DD
+    try:
+        datetime.strptime(expense_date, "%Y-%m-%d")
+    except ValueError:
+        abort(400, description="expense_date 格式必须是 YYYY-MM-DD")
+
+    note = (body.get("note") or "").strip()
+    now_ts = int(time.time())
+    expense_id = uuid.uuid4().hex[:16]
+
+    db = get_db()
+    db.execute(
+        "INSERT INTO expenses (id, amount, category, note, expense_date, created_at, updated_at) VALUES (?,?,?,?,?,?,?)",
+        (expense_id, amount, category, note, expense_date, now_ts, now_ts),
+    )
+
+    row = db.execute("SELECT * FROM expenses WHERE id = ?", (expense_id,)).fetchone()
+    return jsonify(expense=_row_to_expense(row)), 201
+
+
+@app.delete("/api/v1/expenses/<expense_id>")
+def delete_expense(expense_id):
+    """Delete an expense record."""
+    db = get_db()
+    row = db.execute("SELECT id FROM expenses WHERE id = ?", (expense_id,)).fetchone()
+    if not row:
+        abort(404, description="expense not found")
+    db.execute("DELETE FROM expenses WHERE id = ?", (expense_id,))
+    return jsonify(id=expense_id, ok=True)
 
 
 # ---------- Bootstrap ----------

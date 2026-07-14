@@ -19,7 +19,7 @@
 .main-card:active { transform: scale(.97); }
 .main-card-wardrobe { background: linear-gradient(135deg, #fff5e6, #ffe0cc); }
 .main-card-recipe   { background: linear-gradient(135deg, #ffe6f0, #ffccdd); }
-.main-card-health   { background: linear-gradient(135deg, #e6f5ff, #cce5ff); }
+.main-card-bookkeeping { background: linear-gradient(135deg, #e6ffe6, #ccffcc); }
 
 .main-card-icon { font-size: 36px; margin-right: var(--sp-4); flex-shrink: 0; }
 .main-card-body h4 { font-size: var(--fs-lg); margin-bottom: 4px; font-weight: 700; color: var(--text-primary); }

@@ -202,27 +202,6 @@ async function deleteRecipe(id) {
 }
 
 /* ════════════════════════════════════════════
-   健康科普 API
-   ════════════════════════════════════════════ */
-
-async function listHealthArticles(category, limit = 50) {
-  if (_devGuard('listHealthArticles')) return _mockResponse({ count: 0, articles: [] });
-  const params = new URLSearchParams();
-  if (category) params.set('category', category);
-  params.set('limit', String(limit));
-  const res = await fetch(`${window.API_BASE}/api/v1/health/articles?` + params.toString());
-  if (!res.ok) throw new Error('list articles failed');
-  return res.json();
-}
-
-async function getHealthArticle(id) {
-  if (_devGuard('getHealthArticle')) return _mockResponse({ article: { id, title: '示例文章' } });
-  const res = await fetch(`${window.API_BASE}/api/v1/health/articles/${id}`);
-  if (!res.ok) throw new Error('get article failed');
-  return res.json();
-}
-
-/* ════════════════════════════════════════════
    AI 对话 API
    ════════════════════════════════════════════ */
 
@@ -261,18 +240,49 @@ async function generateRecipe(query) {
   return data;
 }
 
-async function generateHealthArticle(topic, category = '') {
-  if (_devGuard('generateHealthArticle')) return _mockResponse({ article: { id: 'mock', title: '示例文章', content: '' } });
-  const body = { topic };
-  if (category) body.category = category;
-  const res = await fetch(`${window.API_BASE}/api/v1/health/articles/generate`, {
+/* ════════════════════════════════════════════
+   记账 API
+   ════════════════════════════════════════════ */
+
+async function listExpenses(category, month, limit = 100) {
+  if (_devGuard('listExpenses')) return _mockResponse({ count: 0, expenses: [], total: 0 });
+  const params = new URLSearchParams();
+  if (category) params.set('category', category);
+  if (month) params.set('month', month);
+  params.set('limit', String(limit));
+  const res = await fetch(`${window.API_BASE}/api/v1/expenses?` + params.toString());
+  if (!res.ok) throw new Error('list expenses failed');
+  return res.json();
+}
+
+async function expensesSummary(month) {
+  if (_devGuard('expensesSummary')) return _mockResponse({ month, total: 0, breakdown: [] });
+  const params = new URLSearchParams();
+  if (month) params.set('month', month);
+  const res = await fetch(`${window.API_BASE}/api/v1/expenses/summary?` + params.toString());
+  if (!res.ok) throw new Error('summary failed');
+  return res.json();
+}
+
+async function createExpense(data) {
+  if (_devGuard('createExpense')) return _mockResponse({ expense: { id: 'mock', ...data } });
+  const res = await fetch(`${window.API_BASE}/api/v1/expenses`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
+    body: JSON.stringify(data),
   });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || `生成失败: HTTP ${res.status}`);
-  return data;
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.description || 'create expense failed');
+  }
+  return res.json();
+}
+
+async function deleteExpense(id) {
+  if (_devGuard('deleteExpense')) return _mockResponse({ ok: true });
+  const res = await fetch(`${window.API_BASE}/api/v1/expenses/${id}`, { method: 'DELETE' });
+  if (!res.ok) throw new Error('delete expense failed');
+  return res.json();
 }
 
 /* ════════════════════════════════════════════
@@ -286,8 +296,8 @@ window.api = {
   recommendOutfit, generateOutfit, getOutfit, feedbackOutfit, listOutfits,
   // 菜谱
   listRecipes, getRecipe, createRecipe, deleteRecipe, generateRecipe,
-  // 健康
-  listHealthArticles, getHealthArticle, generateHealthArticle,
   // 对话
   chatWithAI, getChatHistory,
+  // 记账
+  listExpenses, expensesSummary, createExpense, deleteExpense,
 };
