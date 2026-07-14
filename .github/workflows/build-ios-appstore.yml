@@ -51,9 +51,8 @@ jobs:
             -sdk iphoneos \
             -destination 'generic/platform=iOS' \
             -archivePath build/App.xcarchive \
-            CODE_SIGN_STYLE=Manual \
-            CODE_SIGN_IDENTITY="Apple Distribution" \
-            PROVISIONING_PROFILE_SPECIFIER="match AppStore com.laopodada.app" \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
             | tail -80
 
       - name: Export IPA
@@ -62,28 +61,30 @@ jobs:
           xcodebuild -exportArchive \
             -archivePath build/App.xcarchive \
             -exportPath build/ios \
-            -exportOptionsPlist exportOptions.plist
+            -exportOptionsPlist exportOptions.plist \
+            2>&1 | tee /tmp/export.log
 
       - name: Find IPA
         run: |
-          echo "=== Searching for IPA ==="
-          find ios/App/build -name "*.ipa" -type f 2>/dev/null || echo "No .ipa found"
-          echo "=== Searching for .app ==="
-          find ios/App/build -name "*.app" -type f 2>/dev/null || echo "No .app found"
-          echo "=== Directory listing ==="
-          ls -laR ios/App/build/ios/ 2>/dev/null || echo "No ios/ dir"
-          ls -laR ios/App/build/ 2>/dev/null | head -40
+          echo "=== All files in build ==="
+          find ios/App/build -type f 2>/dev/null | head -50
+          echo "=== Looking for .app or .ipa ==="
+          find ios/App/build -name "*.app" -o -name "*.ipa" 2>/dev/null
 
-      - name: Copy IPA to root
+      - name: Create IPA from .app
         run: |
-          IPA_PATH=$(find ios/App/build -name "*.ipa" -type f | head -1)
-          if [ -z "$IPA_PATH" ]; then
-            echo "ERROR: No .ipa file found!"
+          APP_PATH=$(find ios/App/build -name "*.app" -type d | head -1)
+          if [ -n "$APP_PATH" ]; then
+            echo "Found app: $APP_PATH"
+            mkdir -p Payload
+            cp -r "$APP_PATH" Payload/
+            zip -r laopodada.ipa Payload/
+            rm -rf Payload
+            ls -la laopodada.ipa
+          else
+            echo "ERROR: No .app found!"
             exit 1
           fi
-          echo "Found IPA: $IPA_PATH"
-          cp "$IPA_PATH" ./laopodada.ipa
-          ls -la ./laopodada.ipa
 
       - name: Upload IPA artifact
         uses: actions/upload-artifact@v4
