@@ -39,7 +39,7 @@ jobs:
       - name: Build IPA
         working-directory: ios/App
         run: |
-          npx cap build ios --no-open --no-deploy
+          npx cap build ios --no-deploy
 
       - name: Upload IPA artifact
         uses: actions/upload-artifact@v4
