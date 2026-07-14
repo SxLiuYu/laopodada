@@ -14,6 +14,8 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any, Optional
 
+import db as dbmod  # shared db helpers (health_articles CRUD)
+
 from flask import Flask, abort, g, jsonify, request, send_from_directory
 from PIL import Image
 
@@ -1130,28 +1132,38 @@ Omega-3 有助于提高钙的吸收率,减缓骨质流失,对绝经后女性骨�
 ]
 
 
+# ---------- Startup migration ----------
+def _migrate_health_articles():
+    """On first boot, seed the 8 default health articles if table is empty."""
+    if dbmod.health_articles_count() > 0:
+        return  # already seeded
+    now = int(time.time())
+    for a in HEALTH_ARTICLES:
+        dbmod.insert_health_article({**a, "created_at": now})
+    print(f"[startup] seeded {len(HEALTH_ARTICLES)} default health articles", flush=True)
+
+_migrate_health_articles()
+
+
 @app.get("/api/v1/health/articles")
 def list_health_articles():
-    """Return in-memory health articles with optional category filter and pagination."""
+    """Return health articles from DB with optional category filter and pagination."""
     category = request.args.get("category")
     limit = max(1, min(int(request.args.get("limit", 10)), 100))
     offset = max(0, int(request.args.get("offset", 0)))
 
-    articles = HEALTH_ARTICLES
-    if category:
-        articles = [a for a in articles if a["category"] == category]
-
-    total = len(articles)
-    paginated = articles[offset : offset + limit]
-    return jsonify(count=total, articles=paginated)
+    articles, total = dbmod.get_health_articles(
+        category=category or "", limit=limit, offset=offset,
+    )
+    return jsonify(count=total, articles=articles)
 
 
 @app.get("/api/v1/health/articles/<article_id>")
 def get_health_article(article_id: str):
-    """Return a single health article by id, or 404."""
-    for a in HEALTH_ARTICLES:
-        if a["id"] == article_id:
-            return jsonify(a)
+    """Return a single health article by id from DB, or 404."""
+    a = dbmod.get_health_article_by_id(article_id)
+    if a:
+        return jsonify(a)
     abort(404, description="article not found")
 
 
@@ -1792,7 +1804,7 @@ def generate_health_article():
             import uuid as _uuid
             new_id = f"ai{_uuid.uuid4().hex[:8]}"
             new_article = dict(parsed, id=new_id)
-            HEALTH_ARTICLES.append(new_article)
+            dbmod.insert_health_article(new_article)
             return jsonify(article=new_article), 201
         last_err = err
 
@@ -1952,7 +1964,7 @@ def create_health_article():
         "source": body.get("source", "WHO / 中国居民膳食指南 2022"),
         "created_at": int(time.time()),
     }
-    HEALTH_ARTICLES.append(article)
+    dbmod.insert_health_article(article)
     return jsonify(article), 201
 
 

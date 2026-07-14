@@ -28,3 +28,15 @@ __pycache__/
 # Temp
 *.log
 tmp/
+
+# SQLite temp files
+*.db-shm
+*.db-wal
+
+# Build / tool artifacts
+.superpowers/
+.worktrees/
+cordova/
+
+# iOS (empty project shell, no source yet)
+laopodada-ios/
