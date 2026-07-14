@@ -52,13 +52,13 @@ jobs:
 
       - name: Create IPA from build product
         run: |
-          APP_PATH=$(find ios/App/build/Release-iphoneos -name "*.app" -type d 2>/dev/null | head -1)
+          echo "=== Finding .app in DerivedData ==="
+          APP_PATH=$(find /Users/runner/Library/Developer/Xcode/DerivedData -name "*.app" -type d 2>/dev/null | grep -i "Release-iphoneos" | head -1)
           echo "App path: $APP_PATH"
           if [ -z "$APP_PATH" ]; then
             echo "Searching build output..."
             find ios/App/build -name "*.app" -type d 2>/dev/null
-            find ios/App -name "*.app" -type d 2>/dev/null
-            cat /tmp/build.log | tail -50
+            find /Users/runner/Library/Developer/Xcode/DerivedData -name "*.app" -type d 2>/dev/null | head -5
             exit 1
           fi
           mkdir -p Payload
