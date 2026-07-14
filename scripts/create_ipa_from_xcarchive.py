@@ -10,29 +10,26 @@ ipa_path = os.path.join(workspace, 'laopodada.ipa')
 print(f"Workspace: {workspace}")
 print(f"Archive: {xcarchive}")
 
-# Find .app in xcarchive
-app_candidates = [
-    os.path.join(xcarchive, 'Products', 'Applications', 'App.app'),
-    os.path.join(xcarchive, 'Products', 'Applications', '*.app'),
-]
+# List xcarchive structure
+for root, dirs, files in os.walk(xcarchive):
+    level = root.replace(xcarchive, '').count(os.sep)
+    indent = ' ' * 2 * level
+    print(f"{indent}{os.path.basename(root)}/")
+    subindent = ' ' * 2 * (level + 1)
+    for f in files:
+        print(f"{subindent}{f}")
 
+# Find .app
 app_path = None
-for candidate in app_candidates:
-    if os.path.isdir(candidate):
-        app_path = candidate
-        break
-    elif '*' in candidate:
-        matches = glob.glob(candidate)
-        if matches:
-            app_path = matches[0]
+products_apps = os.path.join(xcarchive, 'Products', 'Applications')
+if os.path.isdir(products_apps):
+    for d in os.listdir(products_apps):
+        if d.endswith('.app'):
+            app_path = os.path.join(products_apps, d)
             break
 
-if not app_path:
-    print("ERROR: .app not found in xcarchive")
-    # List what we have
-    for root, dirs, files in os.walk(xcarchive):
-        for f in files:
-            print(f"  {os.path.join(root, f)}")
+if not app_path or not os.path.isdir(app_path):
+    print(f"ERROR: .app not found. products_apps={products_apps}, exists={os.path.isdir(products_apps)}")
     sys.exit(1)
 
 print(f"Found .app: {app_path}")
