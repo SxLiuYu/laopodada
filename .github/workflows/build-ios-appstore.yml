@@ -65,28 +65,37 @@ jobs:
             -exportOptionsPlist exportOptions.plist \
             2>&1 | tee /tmp/export.log | tail -20
 
-      - name: Find .app
-        id: find_app
+      - name: Find output
+        id: find_output
         working-directory: ios/App
         run: |
-          echo "=== Searching for .app in build/ ==="
-          APP=$(find build -name "*.app" -type d 2>/dev/null | head -1)
-          echo "found=$APP"
-          if [ -z "$APP" ]; then
-            echo "=== build/ contents ==="
-            find build -type f 2>/dev/null
-            echo "=== All dirs ==="
-            ls -laR build/ios/ 2>/dev/null || echo "no build/ios/"
+          echo "=== All files under build/ ==="
+          find build -type f 2>/dev/null || echo "no build dir"
+          echo "=== Looking for .app .ipa .xcarchive ==="
+          find build -name "*.app" -o -name "*.ipa" -o -name "*.xcarchive" 2>/dev/null || echo "none found"
+
+      - name: Build IPA from xcarchive directly
+        working-directory: ios/App
+        run: |
+          echo "=== Using xcodebuild to create .ipa from .xcarchive ==="
+          # The .xcarchive contains the .app in Products/Applications/
+          XCARCHIVE="build/App.xcarchive"
+          APP_IN_ARCHIVE="$XCARCHIVE/Products/Applications/App.app"
+          echo "Checking: $APP_IN_ARCHIVE"
+          if [ -d "$APP_IN_ARCHIVE" ]; then
+            echo "Found .app in xcarchive!"
+            mkdir -p Payload
+            cp -r "$APP_IN_ARCHIVE" Payload/
+            ditto -c -k --sequesterRsrc --keepParent Payload "${GITHUB_WORKSPACE}/laopodada.ipa"
+            rm -rf Payload
+            ls -la "${GITHUB_WORKSPACE}/laopodada.ipa"
+          else
+            echo "App not in xcarchive, trying alternate paths..."
+            find "$XCARCHIVE" -name "*.app" -type d 2>/dev/null
+            echo "Contents of xcarchive:"
+            find "$XCARCHIVE" -type d 2>/dev/null
             exit 1
           fi
-          echo "app_path=ios/App/$APP" >> "$GITHUB_OUTPUT"
-          echo "Found: ios/App/$APP"
-
-      - name: Build IPA
-        run: |
-          echo "=== Running Python IPA creator ==="
-          python3 scripts/create_ipa.py "${{ steps.find_app.outputs.app_path }}" "${GITHUB_WORKSPACE}/laopodada.ipa"
-          echo "=== Done ==="
 
       - name: Upload IPA artifact
         uses: actions/upload-artifact@v4
