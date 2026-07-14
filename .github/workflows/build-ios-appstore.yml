@@ -55,6 +55,12 @@ jobs:
             CODE_SIGNING_REQUIRED=NO \
             | tail -80
 
+      - name: Verify archive exists
+        run: |
+          echo "=== Checking xcarchive ==="
+          ls -la ios/App/build/App.xcarchive || echo "xcarchive NOT FOUND"
+          find ios/App/build -name "*.xcarchive" -type d 2>/dev/null
+
       - name: Export IPA
         working-directory: ios/App
         run: |
