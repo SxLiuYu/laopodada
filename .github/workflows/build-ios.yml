@@ -31,41 +31,50 @@ jobs:
         with:
           node-version: '22'
 
-      - name: Setup Xcode 16
-        run: sudo xcode-select -s /Applications/Xcode_16.app/Contents/Developer
-
-      - name: Install npm dependencies (regen lockfile with npmjs registry for CI integrity)
+      - name: Install npm dependencies
         run: |
           rm -f package-lock.json
           npm install --no-audit --no-fund --registry=https://registry.npmjs.org/
 
       - name: Cap sync (web assets → ios)
-        run: node node_modules/@capacitor/cli/bin/capacitor sync ios
+        run: npx cap sync ios
 
-      - name: xcodebuild for simulator
+      - name: Fix code signing in Xcode project
+        run: |
+          # Disable automatic code signing for CI
+          pbxproj_path="ios/App/App.xcodeproj/project.pbxproj"
+          sed -i '' 's/CODE_SIGN_STYLE = Automatic;/CODE_SIGN_STYLE = Manual;/g' $pbxproj_path
+          sed -i '' 's/CODE_SIGN_IDENTITY = "iPhone Developer";/CODE_SIGN_IDENTITY = "";/g' $pbxproj_path
+          sed -i '' 's/PROVISIONING_PROFILE_SPECIFIER = .*;/PROVISIONING_PROFILE_SPECIFIER = "";/g' $pbxproj_path
+          echo "Updated code signing settings"
+
+      - name: Build iOS app
         working-directory: ios/App
         run: |
-          xcodebuild \
+          xcodebuild build \
             -project App.xcodeproj \
             -scheme App \
             -configuration Release \
             -sdk iphonesimulator \
             -destination 'generic/platform=iOS Simulator' \
-            -derivedDataPath build \
-            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
-            build | tail -50
+            PROVISIONING_PROFILE_SPECIFIER="" \
+            | tee /tmp/xcodebuild.log
 
-      - name: Package .app into zip
-        working-directory: ios/App
+      - name: Check build output
         run: |
-          zip -r /tmp/ios-build.zip build/Build/Products/Release-iphonesimulator/App.app
+          echo "=== Searching for .app ==="
+          find /Users/runner/Library/Developer/Xcode/DerivedData -name "App.app" -type d 2>/dev/null | head -5
+          find ios/App -name "App.app" -type d 2>/dev/null | head -5
+          echo "=== Build log (last 50 lines) ==="
+          tail -50 /tmp/xcodebuild.log 2>/dev/null || echo "No log found"
 
-      - name: Upload iOS build artifact
+      - name: Upload build log
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ios-build
-          path: /tmp/ios-build.zip
-          retention-days: 7
+          name: ios-build-log
+          path: /tmp/xcodebuild.log
+          retention-days: 3
           if-no-files-found: warn
