@@ -68,20 +68,33 @@ jobs:
       - name: Debug output
         working-directory: ios/App
         run: |
-          echo "=== Archive structure ==="
-          find build/App.xcarchive -type f 2>/dev/null || echo "no archive"
-          echo "=== Export dir ==="
-          find build/ios -type f 2>/dev/null || echo "no export dir"
-          echo "=== ditto check ==="
-          which ditto 2>/dev/null || echo "ditto not found"
-          echo "=== python check ==="
-          which python3 2>/dev/null || echo "python3 not found"
+          echo "=== Archive files ==="
+          find build/App.xcarchive -type f 2>/dev/null | head -20
+          echo "=== Export files ==="
+          find build/ios -type f 2>/dev/null | head -20
+          echo "=== All under build/ ==="
+          find build -type f 2>/dev/null | head -40
 
-      - name: Build IPA
-        working-directory: ios/App
+      - name: Build IPA from xcarchive
         run: |
-          echo "=== Building IPA with Python ==="
-          python3 "${GITHUB_WORKSPACE}/scripts/create_ipa_from_xcarchive.py"
+          XCARCHIVE="/home/runner/work/laopodada/laopodada/ios/App/build/App.xcarchive"
+          echo "Checking xcarchive exists: $(test -d $XCARCHIVE && echo yes || echo no)"
+          echo "Products/Applications:"
+          ls -la "$XCARCHIVE/Products/Applications/" 2>/dev/null || echo "NOT FOUND"
+          
+          APP=$(ls "$XCARCHIVE/Products/Applications/"*.app 2>/dev/null | head -1)
+          echo "Found app: $APP"
+          if [ -z "$APP" ]; then
+            echo "ERROR: No .app in xcarchive"
+            find "$XCARCHIVE" -name "*.app" 2>/dev/null
+            exit 1
+          fi
+          
+          mkdir -p Payload
+          cp -r "$APP" Payload/
+          ditto -c -k --sequesterRsrc --keepParent Payload /home/runner/work/laopodada/laopodada/laopodada.ipa
+          ls -la /home/runner/work/laopodada/laopodada/laopodada.ipa
+          rm -rf Payload
 
       - name: Upload IPA artifact
         uses: actions/upload-artifact@v4

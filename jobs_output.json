@@ -1,0 +1,153 @@
+{
+  "total_count": 1,
+  "jobs": [
+    {
+      "id": 87003791105,
+      "run_id": 29307495659,
+      "workflow_name": "Build iOS App Store (Capacitor)",
+      "head_branch": "main",
+      "run_url": "https://api.github.com/repos/SxLiuYu/laopodada/actions/runs/29307495659",
+      "run_attempt": 1,
+      "node_id": "CR_kwDOSx4IgM8AAAAUQdR_AQ",
+      "head_sha": "212f381818bff20aef729ce6eb1b7fc7e7025906",
+      "url": "https://api.github.com/repos/SxLiuYu/laopodada/actions/jobs/87003791105",
+      "html_url": "https://github.com/SxLiuYu/laopodada/actions/runs/29307495659/job/87003791105",
+      "status": "completed",
+      "conclusion": "failure",
+      "created_at": "2026-07-14T05:02:59Z",
+      "started_at": "2026-07-14T05:03:01Z",
+      "completed_at": "2026-07-14T05:03:57Z",
+      "name": "build-ios-appstore",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-07-14T05:03:01Z",
+          "completed_at": "2026-07-14T05:03:02Z"
+        },
+        {
+          "name": "Checkout",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-07-14T05:03:02Z",
+          "completed_at": "2026-07-14T05:03:04Z"
+        },
+        {
+          "name": "Setup Node.js",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2026-07-14T05:03:04Z",
+          "completed_at": "2026-07-14T05:03:04Z"
+        },
+        {
+          "name": "Setup Xcode",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2026-07-14T05:03:04Z",
+          "completed_at": "2026-07-14T05:03:05Z"
+        },
+        {
+          "name": "Install npm dependencies",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5,
+          "started_at": "2026-07-14T05:03:05Z",
+          "completed_at": "2026-07-14T05:03:23Z"
+        },
+        {
+          "name": "Cap sync (web assets → ios)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6,
+          "started_at": "2026-07-14T05:03:23Z",
+          "completed_at": "2026-07-14T05:03:23Z"
+        },
+        {
+          "name": "Bump version",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7,
+          "started_at": "2026-07-14T05:03:23Z",
+          "completed_at": "2026-07-14T05:03:23Z"
+        },
+        {
+          "name": "Archive",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8,
+          "started_at": "2026-07-14T05:03:23Z",
+          "completed_at": "2026-07-14T05:03:52Z"
+        },
+        {
+          "name": "Export IPA",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9,
+          "started_at": "2026-07-14T05:03:52Z",
+          "completed_at": "2026-07-14T05:03:53Z"
+        },
+        {
+          "name": "Debug output",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10,
+          "started_at": "2026-07-14T05:03:53Z",
+          "completed_at": "2026-07-14T05:03:53Z"
+        },
+        {
+          "name": "Build IPA",
+          "status": "completed",
+          "conclusion": "failure",
+          "number": 11,
+          "started_at": "2026-07-14T05:03:53Z",
+          "completed_at": "2026-07-14T05:03:53Z"
+        },
+        {
+          "name": "Upload IPA artifact",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 12,
+          "started_at": "2026-07-14T05:03:53Z",
+          "completed_at": "2026-07-14T05:03:53Z"
+        },
+        {
+          "name": "Post Setup Node.js",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 23,
+          "started_at": "2026-07-14T05:03:53Z",
+          "completed_at": "2026-07-14T05:03:53Z"
+        },
+        {
+          "name": "Post Checkout",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 24,
+          "started_at": "2026-07-14T05:03:53Z",
+          "completed_at": "2026-07-14T05:03:54Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 25,
+          "started_at": "2026-07-14T05:03:54Z",
+          "completed_at": "2026-07-14T05:03:55Z"
+        }
+      ],
+      "check_run_url": "https://api.github.com/repos/SxLiuYu/laopodada/check-runs/87003791105",
+      "labels": [
+        "macos-14"
+      ],
+      "runner_id": 1000002767,
+      "runner_name": "GitHub Actions 1000002767",
+      "runner_group_id": 0,
+      "runner_group_name": "GitHub Actions"
+    }
+  ]
+}
