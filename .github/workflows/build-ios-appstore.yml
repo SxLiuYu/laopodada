@@ -65,31 +65,22 @@ jobs:
             -exportOptionsPlist exportOptions.plist \
             2>&1 | tee /tmp/export.log | tail -20
 
-      - name: Build IPA
+      - name: Find .app
+        id: find_app
         run: |
-          echo "=== Searching for .app ==="
           APP=$(find ios/App/build -name "*.app" -type d | head -1)
-          echo "Found: $APP"
+          echo "Found app: $APP"
+          echo "app_path=$APP" >> "$GITHUB_OUTPUT"
           if [ -z "$APP" ]; then
             echo "ERROR: No .app found!"
             find ios/App/build -type f
             exit 1
           fi
-          echo "=== Creating IPA with Python ==="
-          python -c "
-          import zipfile, os, shutil
-          app = '$APP'
-          payload = 'Payload/' + os.path.basename(app)
-          os.makedirs('Payload', exist_ok=True)
-          shutil.copytree(app, payload)
-          with zipfile.ZipFile('laopodada.ipa', 'w', zipfile.ZIP_DEFLATED) as zf:
-              for root, dirs, files in os.walk('Payload'):
-                  for f in files:
-                      zf.write(os.path.join(root, f), os.path.join('Payload', root[len('Payload'):], f))
-          shutil.rmtree('Payload')
-          print('IPA created successfully')
-          "
-          ls -la laopodada.ipa
+
+      - name: Build IPA
+        run: |
+          echo "=== Running Python IPA creator ==="
+          python3 scripts/create_ipa.py "${{ steps.find_app.outputs.app_path }}" "${GITHUB_WORKSPACE}/laopodada.ipa"
           echo "=== Done ==="
 
       - name: Upload IPA artifact
