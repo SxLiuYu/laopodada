@@ -62,13 +62,36 @@ jobs:
             PROVISIONING_PROFILE_SPECIFIER="" \
             | tee /tmp/xcodebuild.log
 
-      - name: Check build output
+      - name: Create IPA from build
         run: |
-          echo "=== Searching for .app ==="
-          find /Users/runner/Library/Developer/Xcode/DerivedData -name "App.app" -type d 2>/dev/null | head -5
-          find ios/App -name "App.app" -type d 2>/dev/null | head -5
-          echo "=== Build log (last 50 lines) ==="
-          tail -50 /tmp/xcodebuild.log 2>/dev/null || echo "No log found"
+          echo "=== Finding built .app ==="
+          APP_PATH=$(find /Users/runner/Library/Developer/Xcode/DerivedData -name "App.app" -type d 2>/dev/null | sort -r | head -1)
+          if [ -z "$APP_PATH" ]; then
+            echo "ERROR: No App.app found in DerivedData"
+            ls -la /Users/runner/Library/Developer/Xcode/DerivedData/ 2>/dev/null || echo "DerivedData not found"
+            exit 1
+          fi
+          echo "Found App.app at: $APP_PATH"
+          
+          # Create IPA (IPA is just a zip with Payload/App.app)
+          mkdir -p Payload
+          cp -R "$APP_PATH" Payload/
+          zip -qr App.ipa Payload/
+          rm -rf Payload
+          
+          echo "=== IPA created ==="
+          ls -lh App.ipa
+          
+          # Save path for upload
+          echo "APP_PATH=$APP_PATH" >> $GITHUB_ENV
+          echo "IPA_PATH=$(pwd)/App.ipa" >> $GITHUB_ENV
+
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: laopodada-ios
+          path: App.ipa
+          retention-days: 14
 
       - name: Upload build log
         if: always()
