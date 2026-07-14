@@ -53,8 +53,7 @@ jobs:
             -archivePath build/App.xcarchive \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
-            PROVISIONING_PROFILE_SPECIFIER="" \
-            2>&1 | tee /tmp/archive.log | tail -40
+            PROVISIONING_PROFILE_SPECIFIER=""
 
       - name: Export IPA
         working-directory: ios/App
@@ -62,39 +61,11 @@ jobs:
           xcodebuild -exportArchive \
             -archivePath build/App.xcarchive \
             -exportPath build/ios \
-            -exportOptionsPlist exportOptions.plist \
-            2>&1 | tee /tmp/export.log | tail -20
+            -exportOptionsPlist exportOptions.plist
 
-      - name: Debug output
-        working-directory: ios/App
+      - name: Build IPA with Python
         run: |
-          echo "=== Archive files ==="
-          find build/App.xcarchive -type f 2>/dev/null | head -20
-          echo "=== Export files ==="
-          find build/ios -type f 2>/dev/null | head -20
-          echo "=== All under build/ ==="
-          find build -type f 2>/dev/null | head -40
-
-      - name: Build IPA from xcarchive
-        run: |
-          XCARCHIVE="/home/runner/work/laopodada/laopodada/ios/App/build/App.xcarchive"
-          echo "Checking xcarchive exists: $(test -d $XCARCHIVE && echo yes || echo no)"
-          echo "Products/Applications:"
-          ls -la "$XCARCHIVE/Products/Applications/" 2>/dev/null || echo "NOT FOUND"
-          
-          APP=$(ls "$XCARCHIVE/Products/Applications/"*.app 2>/dev/null | head -1)
-          echo "Found app: $APP"
-          if [ -z "$APP" ]; then
-            echo "ERROR: No .app in xcarchive"
-            find "$XCARCHIVE" -name "*.app" 2>/dev/null
-            exit 1
-          fi
-          
-          mkdir -p Payload
-          cp -r "$APP" Payload/
-          ditto -c -k --sequesterRsrc --keepParent Payload /home/runner/work/laopodada/laopodada/laopodada.ipa
-          ls -la /home/runner/work/laopodada/laopodada/laopodada.ipa
-          rm -rf Payload
+          python3 scripts/build_ipa.py
 
       - name: Upload IPA artifact
         uses: actions/upload-artifact@v4
