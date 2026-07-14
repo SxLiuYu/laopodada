@@ -62,21 +62,20 @@ jobs:
           mkdir -p build/ipa
           xcodebuild -exportArchive \
             -archivePath build/App.xcarchive \
-            -exportPath build/ipa/App.ipa \
+            -exportPath build/ipa \
             -exportOptionsPlist exportOptions.plist \
             | tail -30
 
-      - name: Verify IPA
-        working-directory: ios/App
+      - name: Copy IPA to root for artifact upload
         run: |
-          ls -la build/ipa/
-          file build/ipa/App.ipa || echo "IPA not found, searching..."
-          find build -name "*.ipa" -type f 2>/dev/null || echo "No IPA found"
+          find ios/App/build -name "*.ipa" -type f
+          cp $(find ios/App/build -name "*.ipa" -type f) ./laopodada.ipa
+          ls -la ./laopodada.ipa
 
       - name: Upload IPA artifact
         uses: actions/upload-artifact@v4
         with:
           name: laopodada-ipa-${{ github.event.inputs.version }}
-          path: ios/App/build/ipa/App.ipa
+          path: laopodada.ipa
           retention-days: 30
           if-no-files-found: error
