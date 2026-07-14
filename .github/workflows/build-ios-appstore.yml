@@ -51,8 +51,10 @@ jobs:
             -sdk iphoneos \
             -destination 'generic/platform=iOS' \
             -archivePath build/App.xcarchive \
-            CODE_SIGNING_ALLOWED=NO \
-            CODE_SIGNING_REQUIRED=NO
+            CODE_SIGN_IDENTITY="-" \
+            CODE_SIGNING_REQUIRED=NO \
+            PROVISIONING_PROFILE_SPECIFIER="" \
+            2>&1 | tee /tmp/archive.log
 
       - name: Export IPA
         working-directory: ios/App
@@ -60,20 +62,22 @@ jobs:
           xcodebuild -exportArchive \
             -archivePath build/App.xcarchive \
             -exportPath build/ios \
-            -exportOptionsPlist exportOptions.plist
+            -exportOptionsPlist exportOptions.plist \
+            2>&1 | tee /tmp/export.log
 
       - name: Build IPA payload
         working-directory: ios/App/build/ios
         run: |
-          echo "Files in build/ios:"
+          echo "=== Files in build/ios ==="
           ls -la
-          echo "App name:"
+          echo "=== App bundle ==="
           ls *.app
           mkdir -p Payload
           cp -r *.app Payload/
           cd "${GITHUB_WORKSPACE}"
           ditto -c -k --sequesterRsrc --keepParent ios/App/build/ios/Payload laopodada.ipa
           ls -la laopodada.ipa
+          file laopodada.ipa
           rm -rf ios/App/build/ios/Payload
 
       - name: Upload IPA artifact
