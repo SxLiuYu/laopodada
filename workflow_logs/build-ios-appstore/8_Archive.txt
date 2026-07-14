@@ -1,0 +1,79 @@
+﻿2026-07-14T05:33:40.9977790Z ##[group]Run xcodebuild archive \
+2026-07-14T05:33:40.9978110Z [36;1mxcodebuild archive \[0m
+2026-07-14T05:33:40.9978410Z [36;1m  -project App.xcodeproj \[0m
+2026-07-14T05:33:40.9978650Z [36;1m  -scheme App \[0m
+2026-07-14T05:33:40.9978880Z [36;1m  -configuration Release \[0m
+2026-07-14T05:33:40.9979110Z [36;1m  -sdk iphoneos \[0m
+2026-07-14T05:33:40.9979350Z [36;1m  -destination 'generic/platform=iOS' \[0m
+2026-07-14T05:33:40.9979700Z [36;1m  -archivePath build/App.xcarchive \[0m
+2026-07-14T05:33:40.9979980Z [36;1m  CODE_SIGN_IDENTITY="-" \[0m
+2026-07-14T05:33:40.9980190Z [36;1m  CODE_SIGNING_REQUIRED=NO \[0m
+2026-07-14T05:33:40.9980440Z [36;1m  PROVISIONING_PROFILE_SPECIFIER="" \[0m
+2026-07-14T05:33:40.9980690Z [36;1m  2>&1 | tee /tmp/archive.log[0m
+2026-07-14T05:33:41.0032620Z shell: /bin/bash -e {0}
+2026-07-14T05:33:41.0032840Z ##[endgroup]
+2026-07-14T05:33:42.2720300Z Command line invocation:
+2026-07-14T05:33:42.2721670Z     /Applications/Xcode_15.4.app/Contents/Developer/usr/bin/xcodebuild archive -project App.xcodeproj -scheme App -configuration Release -sdk iphoneos -destination generic/platform=iOS -archivePath build/App.xcarchive CODE_SIGN_IDENTITY=- CODE_SIGNING_REQUIRED=NO PROVISIONING_PROFILE_SPECIFIER=
+2026-07-14T05:33:42.2723070Z 
+2026-07-14T05:33:42.2723340Z User defaults from command line:
+2026-07-14T05:33:42.2724110Z     IDEArchivePathOverride = /Users/runner/work/laopodada/laopodada/ios/App/build/App.xcarchive
+2026-07-14T05:33:42.2724590Z     IDEPackageSupportUseBuiltinSCM = YES
+2026-07-14T05:33:42.2724750Z 
+2026-07-14T05:33:42.2724880Z Build settings from command line:
+2026-07-14T05:33:42.2725100Z     CODE_SIGN_IDENTITY = -
+2026-07-14T05:33:42.2725330Z     CODE_SIGNING_REQUIRED = NO
+2026-07-14T05:33:42.2725590Z     PROVISIONING_PROFILE_SPECIFIER = 
+2026-07-14T05:33:42.2725920Z     SDKROOT = iphoneos17.5
+2026-07-14T05:33:42.2726040Z 
+2026-07-14T05:33:51.0734620Z Resolve Package Graph
+2026-07-14T05:33:59.5976870Z 
+2026-07-14T05:33:59.5978130Z Fetching from https://github.com/ionic-team/capacitor-swift-pm.git
+2026-07-14T05:34:00.1101820Z 
+2026-07-14T05:34:00.4720650Z Creating working copy of package ‘capacitor-swift-pm’
+2026-07-14T05:34:00.5007970Z 
+2026-07-14T05:34:00.5014670Z Checking out 8.4.1 of package ‘capacitor-swift-pm’
+2026-07-14T05:34:00.5231870Z 
+2026-07-14T05:34:01.9232750Z 
+2026-07-14T05:34:01.9233410Z Resolved source packages:
+2026-07-14T05:34:01.9234230Z   capacitor-swift-pm: https://github.com/ionic-team/capacitor-swift-pm.git @ 8.4.1
+2026-07-14T05:34:01.9235080Z   CapApp-SPM: /Users/runner/work/laopodada/laopodada/ios/App/CapApp-SPM @ local
+2026-07-14T05:34:01.9235520Z 
+2026-07-14T05:34:02.0624800Z Prepare packages
+2026-07-14T05:34:02.0626050Z 
+2026-07-14T05:34:02.1177600Z note: Using codesigning identity override: -
+2026-07-14T05:34:02.7892080Z ComputeTargetDependencyGraph
+2026-07-14T05:34:02.8699750Z note: Building targets in dependency order
+2026-07-14T05:34:02.8801010Z note: Target dependency graph (5 targets)
+2026-07-14T05:34:02.8902620Z     Target 'App' in project 'App'
+2026-07-14T05:34:02.9004520Z         ➜ Explicit dependency on target 'CapApp-SPM' in project 'CapApp-SPM'
+2026-07-14T05:34:02.9106360Z     Target 'CapApp-SPM' in project 'CapApp-SPM'
+2026-07-14T05:34:02.9208340Z         ➜ Explicit dependency on target 'CapApp-SPM' in project 'CapApp-SPM'
+2026-07-14T05:34:02.9310820Z         ➜ Explicit dependency on target 'Capacitor' in project 'capacitor-swift-pm'
+2026-07-14T05:34:02.9412990Z         ➜ Explicit dependency on target 'Cordova' in project 'capacitor-swift-pm'
+2026-07-14T05:34:02.9515000Z     Target 'CapApp-SPM' in project 'CapApp-SPM'
+2026-07-14T05:34:02.9619240Z         ➜ Explicit dependency on target 'Capacitor' in project 'capacitor-swift-pm'
+2026-07-14T05:34:02.9722280Z         ➜ Explicit dependency on target 'Cordova' in project 'capacitor-swift-pm'
+2026-07-14T05:34:02.9824860Z     Target 'Cordova' in project 'capacitor-swift-pm' (no dependencies)
+2026-07-14T05:34:02.9914300Z     Target 'Capacitor' in project 'capacitor-swift-pm' (no dependencies)
+2026-07-14T05:34:02.9932880Z 
+2026-07-14T05:34:03.0034180Z GatherProvisioningInputs
+2026-07-14T05:34:03.0063120Z 
+2026-07-14T05:34:03.0337830Z CreateBuildDescription
+2026-07-14T05:34:03.1707570Z 
+2026-07-14T05:34:03.1810440Z ExecuteExternalTool /Applications/Xcode_15.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -v
+2026-07-14T05:34:04.0047190Z 
+2026-07-14T05:34:04.0158650Z ExecuteExternalTool /Applications/Xcode_15.4.app/Contents/Developer/usr/bin/actool --print-asset-tag-combinations --output-format xml1 /Users/runner/work/laopodada/laopodada/ios/App/App/Assets.xcassets
+2026-07-14T05:34:06.2091400Z 
+2026-07-14T05:34:06.2195150Z ExecuteExternalTool /Applications/Xcode_15.4.app/Contents/Developer/usr/bin/ibtool --version --output-format xml1
+2026-07-14T05:34:06.2294870Z 
+2026-07-14T05:34:06.2399680Z ExecuteExternalTool /Applications/Xcode_15.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -v -E -dM -isysroot /Applications/Xcode_15.4.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS17.5.sdk -x c -c /dev/null
+2026-07-14T05:34:06.7362470Z 
+2026-07-14T05:34:06.7627000Z ExecuteExternalTool /Applications/Xcode_15.4.app/Contents/Developer/usr/bin/actool --version --output-format xml1
+2026-07-14T05:34:06.7855280Z 
+2026-07-14T05:34:06.7965290Z ExecuteExternalTool /Applications/Xcode_15.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld -version_details
+2026-07-14T05:34:06.8093840Z 
+2026-07-14T05:34:06.8738020Z Build description signature: 4e08f8c2615334ecbff9a087002381d9
+2026-07-14T05:34:06.8848000Z Build description path: /Users/runner/Library/Developer/Xcode/DerivedData/App-hdtvlrsodmzipjfpughxbptmgmmv/Build/Intermediates.noindex/ArchiveIntermediates/App/IntermediateBuildFilesPath/XCBuildData/4e08f8c2615334ecbff9a087002381d9.xcbuilddata
+2026-07-14T05:34:06.8950730Z error: Ad Hoc code signing is not allowed with SDK 'iOS 17.5'. (in target 'App' from project 'App')
+2026-07-14T05:34:06.9129780Z ** ARCHIVE FAILED **
+2026-07-14T05:34:06.9238160Z 

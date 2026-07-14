@@ -1,0 +1,8 @@
+﻿2026-07-14T05:34:07.6754570Z ##[group]Run python3 scripts/build_ipa.py
+2026-07-14T05:34:07.6754950Z [36;1mpython3 scripts/build_ipa.py[0m
+2026-07-14T05:34:07.6907540Z shell: /bin/bash -e {0}
+2026-07-14T05:34:07.6907910Z ##[endgroup]
+2026-07-14T05:34:07.9161870Z Archive exists: False
+2026-07-14T05:34:07.9264540Z Products/Applications exists: False
+2026-07-14T05:34:07.9333280Z ERROR: Products/Applications not found
+2026-07-14T05:34:07.9346440Z ##[error]Process completed with exit code 1.

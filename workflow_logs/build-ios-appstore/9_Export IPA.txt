@@ -1,0 +1,11 @@
+﻿2026-07-14T05:34:06.9372010Z ##[group]Run xcodebuild -exportArchive \
+2026-07-14T05:34:06.9375010Z [36;1mxcodebuild -exportArchive \[0m
+2026-07-14T05:34:06.9375400Z [36;1m  -archivePath build/App.xcarchive \[0m
+2026-07-14T05:34:06.9375750Z [36;1m  -exportPath build/ios \[0m
+2026-07-14T05:34:06.9376150Z [36;1m  -exportOptionsPlist exportOptions.plist \[0m
+2026-07-14T05:34:06.9376470Z [36;1m  2>&1 | tee /tmp/export.log[0m
+2026-07-14T05:34:06.9680710Z shell: /bin/bash -e {0}
+2026-07-14T05:34:06.9681070Z ##[endgroup]
+2026-07-14T05:34:07.6418440Z error: archive not found at path '/Users/runner/work/laopodada/laopodada/ios/App/build/App.xcarchive'
+2026-07-14T05:34:07.6520450Z ** EXPORT FAILED **
+2026-07-14T05:34:07.6621120Z 

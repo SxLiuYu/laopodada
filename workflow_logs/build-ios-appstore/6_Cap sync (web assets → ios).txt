@@ -1,0 +1,12 @@
+﻿2026-07-14T05:33:40.7325490Z ##[group]Run node node_modules/@capacitor/cli/bin/capacitor sync ios
+2026-07-14T05:33:40.7325920Z [36;1mnode node_modules/@capacitor/cli/bin/capacitor sync ios[0m
+2026-07-14T05:33:40.7384630Z shell: /bin/bash -e {0}
+2026-07-14T05:33:40.7384970Z ##[endgroup]
+2026-07-14T05:33:40.9173320Z ✔ Copying web assets from www to ios/App/App/public in 4.96ms
+2026-07-14T05:33:40.9179810Z ✔ Creating capacitor.config.json in ios/App/App in 483.67μs
+2026-07-14T05:33:40.9201950Z ✔ copy ios in 10.00ms
+2026-07-14T05:33:40.9216800Z ✔ Updating iOS plugins in 273.67μs
+2026-07-14T05:33:40.9325960Z [info] All Capacitor plugins have a Package.swift file and will be included in Package.swift
+2026-07-14T05:33:40.9358540Z [info] Writing Package.swift
+2026-07-14T05:33:40.9359240Z ✔ update ios in 14.08ms
+2026-07-14T05:33:40.9359660Z [info] Sync finished in 0.032s

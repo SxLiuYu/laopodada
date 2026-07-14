@@ -1,0 +1,5 @@
+﻿2026-07-14T05:33:40.9538140Z ##[group]Run /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString 1.0.5" App/Info.plist
+2026-07-14T05:33:40.9538890Z [36;1m/usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString 1.0.5" App/Info.plist[0m
+2026-07-14T05:33:40.9539440Z [36;1m/usr/libexec/PlistBuddy -c "Set :CFBundleVersion 31" App/Info.plist[0m
+2026-07-14T05:33:40.9593000Z shell: /bin/bash -e {0}
+2026-07-14T05:33:40.9593260Z ##[endgroup]

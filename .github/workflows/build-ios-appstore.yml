@@ -22,18 +22,10 @@ jobs:
         with:
           node-version: '22'
 
-      - name: Setup Xcode
-        run: |
-          ls /Applications/ | grep -i xcode
-          sudo xcode-select -s /Applications/Xcode_15.4.app/Contents/Developer
-
       - name: Install npm dependencies
         run: |
           rm -f package-lock.json
           npm install --no-audit --no-fund --registry=https://registry.npmjs.org/
-
-      - name: Cap sync (web assets → ios)
-        run: node node_modules/@capacitor/cli/bin/capacitor sync ios
 
       - name: Bump version
         working-directory: ios/App
@@ -41,38 +33,18 @@ jobs:
           /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString ${{ github.event.inputs.version }}" App/Info.plist
           /usr/libexec/PlistBuddy -c "Set :CFBundleVersion ${{ github.run_number }}" App/Info.plist
 
-      - name: Archive
+      - name: Sync Capacitor
+        run: npx cap sync ios
+
+      - name: Build IPA
         working-directory: ios/App
         run: |
-          xcodebuild archive \
-            -project App.xcodeproj \
-            -scheme App \
-            -configuration Release \
-            -sdk iphoneos \
-            -destination 'generic/platform=iOS' \
-            -archivePath build/App.xcarchive \
-            CODE_SIGN_IDENTITY="-" \
-            CODE_SIGNING_REQUIRED=NO \
-            PROVISIONING_PROFILE_SPECIFIER="" \
-            2>&1 | tee /tmp/archive.log
-
-      - name: Export IPA
-        working-directory: ios/App
-        run: |
-          xcodebuild -exportArchive \
-            -archivePath build/App.xcarchive \
-            -exportPath build/ios \
-            -exportOptionsPlist exportOptions.plist \
-            2>&1 | tee /tmp/export.log
-
-      - name: Build IPA with Python
-        run: |
-          python3 scripts/build_ipa.py
+          npx cap build ios --no-open --no-deploy
 
       - name: Upload IPA artifact
         uses: actions/upload-artifact@v4
         with:
           name: laopodada-ipa-${{ github.event.inputs.version }}
-          path: laopodada.ipa
+          path: ios/App/App.ipa
           retention-days: 30
-          if-no-files-found: error
+          if-no-files-found: warn
