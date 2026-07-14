@@ -36,6 +36,9 @@ jobs:
       - name: Sync Capacitor
         run: npx cap sync ios
 
+      - name: Add iOS platform
+        run: npx cap add ios --force
+
       - name: Build IPA
         working-directory: ios/App
         run: |
