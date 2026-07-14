@@ -36,18 +36,41 @@ jobs:
       - name: Sync Capacitor
         run: npx cap sync ios
 
-      - name: Add iOS platform
-        run: npx cap add ios --force
-
       - name: Build IPA
         working-directory: ios/App
         run: |
-          npx cap build ios
+          xcodebuild build \
+            -project App.xcodeproj \
+            -scheme App \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            PROVISIONING_PROFILE_SPECIFIER="" \
+            | tee /tmp/build.log
+
+      - name: Create IPA from build product
+        run: |
+          APP_PATH=$(find ios/App/build/Release-iphoneos -name "*.app" -type d 2>/dev/null | head -1)
+          echo "App path: $APP_PATH"
+          if [ -z "$APP_PATH" ]; then
+            echo "Searching build output..."
+            find ios/App/build -name "*.app" -type d 2>/dev/null
+            find ios/App -name "*.app" -type d 2>/dev/null
+            cat /tmp/build.log | tail -50
+            exit 1
+          fi
+          mkdir -p Payload
+          cp -r "$APP_PATH" Payload/
+          ditto -c -k --sequesterRsrc --keepParent Payload "${GITHUB_WORKSPACE}/laopodada.ipa"
+          rm -rf Payload
+          ls -la "${GITHUB_WORKSPACE}/laopodada.ipa"
 
       - name: Upload IPA artifact
         uses: actions/upload-artifact@v4
         with:
           name: laopodada-ipa-${{ github.event.inputs.version }}
-          path: ios/App/App.ipa
+          path: laopodada.ipa
           retention-days: 30
-          if-no-files-found: warn
+          if-no-files-found: error
