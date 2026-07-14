@@ -1,53 +1,51 @@
 #!/usr/bin/env python3
-"""Build IPA from xcarchive using Python zipfile."""
-import zipfile, os, shutil, sys, glob
+"""Build IPA from xcarchive."""
+import zipfile, os, shutil, sys
 
-workspace = os.environ.get('GITHUB_WORKSPACE', os.getcwd())
-ios_app = os.path.join(workspace, 'ios', 'App')
-xcarchive = os.path.join(ios_app, 'build', 'App.xcarchive')
-ipa_path = os.path.join(workspace, 'laopodada.ipa')
+xcarchive = '/home/runner/work/laopodada/laopodada/ios/App/build/App.xcarchive'
+ipa_path = '/home/runner/work/laopodada/laopodada/laopodada.ipa'
 
-print(f"Workspace: {workspace}")
 print(f"Archive: {xcarchive}")
+print(f"Exists: {os.path.isdir(xcarchive)}")
 
-# List xcarchive structure
+# List xcarchive
 for root, dirs, files in os.walk(xcarchive):
     level = root.replace(xcarchive, '').count(os.sep)
     indent = ' ' * 2 * level
     print(f"{indent}{os.path.basename(root)}/")
     subindent = ' ' * 2 * (level + 1)
-    for f in files:
+    for f in files[:5]:
         print(f"{subindent}{f}")
 
 # Find .app
-app_path = None
 products_apps = os.path.join(xcarchive, 'Products', 'Applications')
-if os.path.isdir(products_apps):
-    for d in os.listdir(products_apps):
-        if d.endswith('.app'):
-            app_path = os.path.join(products_apps, d)
-            break
+print(f"\nProducts/Applications exists: {os.path.isdir(products_apps)}")
 
-if not app_path or not os.path.isdir(app_path):
-    print(f"ERROR: .app not found. products_apps={products_apps}, exists={os.path.isdir(products_apps)}")
+if not os.path.isdir(products_apps):
+    print("ERROR: Products/Applications not found")
     sys.exit(1)
 
-print(f"Found .app: {app_path}")
+app_names = [d for d in os.listdir(products_apps) if d.endswith('.app')]
+print(f"App names: {app_names}")
+
+if not app_names:
+    print("ERROR: No .app found")
+    sys.exit(1)
+
+app_path = os.path.join(products_apps, app_names[0])
+print(f"Using: {app_path}")
 
 # Create IPA
-payload_name = os.path.basename(app_path)
-payload_dir = os.path.join(os.path.dirname(ipa_path), 'Payload')
-dst = os.path.join(payload_dir, payload_name)
+payload_dir = '/home/runner/work/laopodada/laopodada/Payload'
 os.makedirs(payload_dir, exist_ok=True)
-
-shutil.copytree(app_path, dst)
+shutil.copytree(app_path, os.path.join(payload_dir, app_names[0]))
 
 with zipfile.ZipFile(ipa_path, 'w', zipfile.ZIP_DEFLATED) as zf:
     for root, dirs, files in os.walk(payload_dir):
         for f in files:
             full = os.path.join(root, f)
-            arcname = os.path.relpath(full, os.path.dirname(payload_dir))
-            zf.write(full, arcname)
+            arcname = os.path.relpath(full, payload_dir)
+            zf.write(full, os.path.join('Payload', arcname))
 
 shutil.rmtree(payload_dir)
 print(f"IPA created: {ipa_path}")
