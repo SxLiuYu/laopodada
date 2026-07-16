@@ -12,7 +12,7 @@ on:
       - '.github/workflows/build-android.yml'
   workflow_dispatch:
 
-jobs:'
+jobs:
   build-android:
     runs-on: ubuntu-22.04
     timeout-minutes: 30
@@ -174,17 +174,11 @@ jobs:'
 
       - name: Verify APK signatures
         run: |
-          python -c "
-import zipfile, os
-for root, dirs, files in os.walk('android/app/build/outputs/apk'):
-    for f in files:
-        if f.endswith('.apk'):
-            path = os.path.join(root, f)
-            zf = zipfile.ZipFile(path)
-            certs = [x for x in zf.namelist() if 'CERT' in x.upper()]
-            print(f'{f}: signed={bool(certs)} certs={certs}')
-            zf.close()
-"
+          echo "=== Verifying APK signatures ==="
+          for apk in $(find android/app/build/outputs/apk -name "*.apk"); do
+            CERT_COUNT=$(unzip -l "$apk" | grep -c "META-INF/CERT")
+            echo "$apk: CERT files=$CERT_COUNT"
+          done
 
       - name: List generated APKs
         run: |
