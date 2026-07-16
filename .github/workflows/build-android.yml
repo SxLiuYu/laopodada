@@ -137,10 +137,10 @@ jobs:
               --ks-pass pass:android \
               --ks-key-alias androiddebugkey \
               --key-pass pass:android \
-              "$DEBUG_APK" 2>&1
+              "$DEBUG_APK" 2>&1 | tee /tmp/sign-debug.log
             
             echo "=== Verifying debug APK ==="
-            "$APKSIGNER" verify --verbose "$DEBUG_APK" 2>&1 | head -10
+            "$APKSIGNER" verify --verbose "$DEBUG_APK" 2>&1 | tee /tmp/verify-debug.log | head -10
           fi
           
           # Sign release APK
@@ -155,11 +155,24 @@ jobs:
               --ks-pass pass:android \
               --ks-key-alias androiddebugkey \
               --key-pass pass:android \
-              "$RELEASE_APK" 2>&1
+              "$RELEASE_APK" 2>&1 | tee /tmp/sign-release.log
             
             echo "=== Verifying release APK ==="
-            "$APKSIGNER" verify --verbose "$RELEASE_APK" 2>&1 | head -10
+            "$APKSIGNER" verify --verbose "$RELEASE_APK" 2>&1 | tee /tmp/verify-release.log | head -10
           fi
+
+      - name: Upload signing logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: signing-logs
+          path: |
+            /tmp/sign-debug.log
+            /tmp/sign-release.log
+            /tmp/verify-debug.log
+            /tmp/verify-release.log
+          if-no-files-found: warn
+          retention-days: 7
 
       - name: Verify APK signatures
         run: |
