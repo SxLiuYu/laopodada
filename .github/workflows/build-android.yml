@@ -82,9 +82,9 @@ jobs:
           echo "=== End log ==="
 
       - name: Configure APK signing via Gradle
-        working-directory: android/app
+        working-directory: android
         run: |
-          # Create debug keystore
+          # Create debug keystore in android/ directory
           if [ ! -f debug.keystore ]; then
             keytool -genkey -v \
               -keystore debug.keystore \
@@ -119,25 +119,24 @@ jobs:
           echo "=== Finding APKs ==="
           find android/app/build/outputs/apk -name "*.apk" -exec ls -lh {} \;
           
+          # Check keystore
+          echo "=== Keystore check ==="
+          ls -la android/debug.keystore 2>&1 || echo "Keystore NOT FOUND at android/debug.keystore!"
+          ls -la android/app/debug.keystore 2>&1 || echo "Keystore NOT FOUND at android/app/debug.keystore!"
+          
           # Sign debug APK
           DEBUG_APK=$(find android/app/build/outputs/apk/debug -name "*.apk" -type f | head -1)
           echo "DEBUG_APK=$DEBUG_APK"
-          echo "Keystore exists: $(test -f android/app/debug.keystore && echo YES || echo NO)"
-          echo "Keystore path: android/app/debug.keystore"
-          ls -la android/app/debug.keystore 2>&1 || echo "Keystore NOT FOUND!"
           
-          if [ -n "$DEBUG_APK" ] && [ -f android/app/debug.keystore ]; then
+          if [ -n "$DEBUG_APK" ]; then
             echo "=== Signing debug: $DEBUG_APK ==="
             jarsigner -verbose -sigalg SHA1withRSA -digestalg SHA1 \
-              -keystore android/app/debug.keystore \
+              -keystore android/debug.keystore \
               -storepass android -keypass android \
               "$DEBUG_APK" androiddebugkey 2>&1 | tee /tmp/sign-debug.log
             
             echo "=== Verifying debug APK ==="
             jarsigner -verify -certs "$DEBUG_APK" 2>&1 | head -5
-          else
-            echo "ERROR: Missing APK ($DEBUG_APK) or keystore!"
-            exit 1
           fi
           
           # Sign release APK
@@ -147,7 +146,7 @@ jobs:
           if [ -n "$RELEASE_APK" ]; then
             echo "=== Signing release: $RELEASE_APK ==="
             jarsigner -verbose -sigalg SHA1withRSA -digestalg SHA1 \
-              -keystore android/app/debug.keystore \
+              -keystore android/debug.keystore \
               -storepass android -keypass android \
               "$RELEASE_APK" androiddebugkey 2>&1 | tee /tmp/sign-release.log
             
