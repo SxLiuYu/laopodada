@@ -84,7 +84,7 @@ jobs:
       - name: Configure APK signing
         working-directory: android/app
         run: |
-          # Create debug keystore in the same directory
+          # Create debug keystore
           if [ ! -f debug.keystore ]; then
             keytool -genkey -v \
               -keystore debug.keystore \
@@ -93,54 +93,56 @@ jobs:
               -storepass android -keypass android \
               -dname "CN=Android Debug,O=Android,C=US" 2>&1 || echo "Keystore creation skipped"
           fi
-          
-          # Write a signing.gradle file
-          cat > signing.gradle << 'SIGNING_EOF'
-          android {
-              signingConfigs {
-                  signed {
-                      storeFile file('debug.keystore')
-                      storePassword 'android'
-                      keyAlias 'androiddebugkey'
-                      keyPassword 'android'
-                  }
-              }
-              buildTypes {
-                  release {
-                      signingConfig signingConfigs.signed
-                      minifyEnabled false
-                  }
-                  debug {
-                      signingConfig signingConfigs.signed
-                  }
-              }
-          }
-          SIGNING_EOF
-          
-          # Append signing.gradle to build.gradle
-          echo "" >> build.gradle
-          echo "apply from: 'signing.gradle'" >> build.gradle
-          
-          echo "=== signing.gradle content ==="
-          cat signing.gradle
-          echo "=== debug.keystore exists ==="
-          ls -la debug.keystore
 
-      - name: Build Debug APK (signed)
+      - name: Build Debug APK
         working-directory: android
         run: |
           chmod +x gradlew
           ./gradlew assembleDebug --no-daemon --stacktrace 2>&1 | tee /tmp/gradle-debug.log
-          echo "=== Debug APK ==="
-          ls -lh app/build/outputs/apk/debug/*.apk 2>/dev/null || echo "No debug APK"
+          echo "=== Debug APKs ==="
+          find app/build/outputs/apk/debug -name "*.apk" -exec ls -lh {} \; 2>/dev/null || echo "No debug APKs"
 
-      - name: Build Release APK (signed)
+      - name: Sign Debug APK with jarsigner
+        run: |
+          DEBUG_APK=$(find android/app/build/outputs/apk/debug -name "*.apk" -type f | head -1)
+          if [ -z "$DEBUG_APK" ]; then
+            echo "ERROR: No debug APK found"
+            find android/app/build/outputs/apk -name "*.apk" 2>/dev/null
+            exit 1
+          fi
+          echo "Signing: $DEBUG_APK"
+          jarsigner -verbose -sigalg SHA1withRSA -digestalg SHA1 \
+            -keystore android/app/debug.keystore \
+            -storepass android -keypass android \
+            "$DEBUG_APK" androiddebugkey
+          echo "=== Verification ==="
+          jarsigner -verify -verbose -certs "$DEBUG_APK" 2>&1 | head -10
+          ls -lh "$DEBUG_APK"
+
+      - name: Build Release APK
         working-directory: android
         run: |
           chmod +x gradlew
           ./gradlew assembleRelease --no-daemon --stacktrace 2>&1 | tee /tmp/gradle-release.log
-          echo "=== Release APK ==="
-          ls -lh app/build/outputs/apk/release/*.apk 2>/dev/null || echo "No release APK"
+          echo "=== Release APKs ==="
+          find app/build/outputs/apk/release -name "*.apk" -exec ls -lh {} \; 2>/dev/null || echo "No release APKs"
+
+      - name: Sign Release APK with jarsigner
+        run: |
+          RELEASE_APK=$(find android/app/build/outputs/apk/release -name "*.apk" -type f | head -1)
+          if [ -z "$RELEASE_APK" ]; then
+            echo "ERROR: No release APK found"
+            find android/app/build/outputs/apk -name "*.apk" 2>/dev/null
+            exit 1
+          fi
+          echo "Signing: $RELEASE_APK"
+          jarsigner -verbose -sigalg SHA1withRSA -digestalg SHA1 \
+            -keystore android/app/debug.keystore \
+            -storepass android -keypass android \
+            "$RELEASE_APK" androiddebugkey
+          echo "=== Verification ==="
+          jarsigner -verify -verbose -certs "$RELEASE_APK" 2>&1 | head -10
+          ls -lh "$RELEASE_APK"
 
       - name: List generated APKs
         run: |
@@ -148,8 +150,6 @@ jobs:
           find android/app/build/outputs/apk/debug -name "*.apk" -exec ls -lh {} \; 2>/dev/null || echo "No debug APKs"
           echo "=== Release APKs ==="
           find android/app/build/outputs/apk/release -name "*.apk" -exec ls -lh {} \; 2>/dev/null || echo "No release APKs"
-          echo "=== Full outputs tree ==="
-          find android/app/build/outputs/apk -type f 2>/dev/null | head -20
 
       - name: Upload Debug APK
         if: always()
