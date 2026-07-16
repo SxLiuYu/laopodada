@@ -81,71 +81,49 @@ jobs:
           cat /tmp/cap-sync.log
           echo "=== End log ==="
 
-      - name: Build Debug APK
+      - name: Configure APK signing
+        working-directory: android/app
+        run: |
+          # Add signing config to build.gradle
+          cat >> build.gradle << 'EOF'
+          
+          android {
+              signingConfigs {
+                  debug {
+                      storeFile file('debug.keystore')
+                      storePassword 'android'
+                      keyAlias 'androiddebugkey'
+                      keyPassword 'android'
+                  }
+              }
+          }
+EOF
+          
+          # Create debug keystore
+          if [ ! -f debug.keystore ]; then
+            keytool -genkey -v \
+              -keystore debug.keystore \
+              -alias androiddebugkey \
+              -keyalg RSA -keysize 2048 -validity 10000 \
+              -storepass android -keypass android \
+              -dname "CN=Android Debug,O=Android,C=US" 2>&1 || echo "Keystore creation skipped"
+          fi
+
+      - name: Build Debug APK (signed)
         working-directory: android
         run: |
           chmod +x gradlew
-          (./gradlew assembleDebug --no-daemon --stacktrace; echo "EXIT=$?") 2>&1 | tee /tmp/gradle-debug.log
-          echo "=== Log dump (last 200) ==="
-          tail -200 /tmp/gradle-debug.log
-          echo "=== End log ==="
+          ./gradlew assembleDebug --no-daemon --stacktrace 2>&1 | tee /tmp/gradle-debug.log
+          echo "=== Debug APK ==="
+          ls -lh app/build/outputs/apk/debug/*.apk 2>/dev/null || echo "No debug APK"
 
-      - name: Upload gradle debug log
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: gradle-debug-log
-          path: /tmp/gradle-debug.log
-          if-no-files-found: warn
-          retention-days: 1
-
-      - name: Build Release APK (unsigned)
+      - name: Build Release APK (signed)
         working-directory: android
-        continue-on-error: true
         run: |
-          (./gradlew assembleRelease --no-daemon --stacktrace; echo "EXIT=$?") 2>&1 | tee /tmp/gradle-release.log
-          echo "=== Release log dump (last 100) ==="
-          tail -100 /tmp/gradle-release.log
-          echo "=== End log ==="
-
-      - name: Verify APK output
-        run: |
-          echo "=== Search for APK (any location) ==="
-          find . -name "*.apk" 2>/dev/null
-          echo "=== expected path /android/app/build/outputs/apk/debug/ ==="
-          ls -la android/app/build/outputs/apk/debug/ 2>&1 || echo "DIR MISSING"
-          echo "=== broader: /android/app/build/outputs/apk/ ==="
-          ls -la android/app/build/outputs/apk/ 2>&1 || echo "APK DIR MISSING"
-          echo "=== broader: /android/app/build/ ==="
-          find android/app/build -name "*.apk" 2>&1 || echo "NO APK in build/"
-          echo "=== broader: /android/app/build/outputs/ ==="
-          find android/app/build/outputs -type f 2>&1 | head -20
-          echo "=== save debug to file ==="
-          {
-            echo "=== Run $GITHUB_RUN_ID ==="
-            echo "=== Verify APK output ==="
-            find . -name "*.apk" 2>/dev/null
-            echo "--- outputs/ tree ---"
-            find android/app/build/outputs -type f 2>&1 | head -20
-            echo "--- gradle-debug.log ---"
-            cat /tmp/gradle-debug.log 2>&1 | tail -150
-            echo "--- gradle-release.log ---"
-            cat /tmp/gradle-release.log 2>&1 | tail -50
-          } > /tmp/CI-DEBUG.md
-          ls -la /tmp/CI-DEBUG.md
-
-      - name: Commit debug log to ci-debug-logs branch
-        if: always()
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "actions@users.noreply.github.com"
-          git checkout --orphan ci-debug-logs 2>/dev/null || git checkout ci-debug-logs
-          git rm -rf . 2>/dev/null || true
-          cp /tmp/CI-DEBUG.md DEBUG-LOG.md
-          git add DEBUG-LOG.md
-          git commit -m "ci-debug: run $GITHUB_RUN_ID sha $GITHUB_SHA" 2>&1
-          git push -f origin ci-debug-logs 2>&1 | tail -5
-          echo "=== committed ==="
+          chmod +x gradlew
+          ./gradlew assembleRelease --no-daemon --stacktrace 2>&1 | tee /tmp/gradle-release.log
+          echo "=== Release APK ==="
+          ls -lh app/build/outputs/apk/release/*.apk 2>/dev/null || echo "No release APK"
 
       - name: Upload Debug APK
         if: always()
@@ -154,7 +132,7 @@ jobs:
           name: laopodada-debug-apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: warn
-          retention-days: 7
+          retention-days: 14
 
       - name: Upload Release APK
         if: always()
@@ -163,4 +141,4 @@ jobs:
           name: laopodada-release-apk
           path: android/app/build/outputs/apk/release/
           if-no-files-found: warn
-          retention-days: 7
+          retention-days: 14
