@@ -1,4 +1,4 @@
-'name: Build Android APK (Capacitor)
+name: Build Android APK (Capacitor)
 
 'on:
   push:
