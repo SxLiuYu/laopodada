@@ -117,15 +117,25 @@ jobs:
           echo "=== Signing: $DEBUG_APK ==="
           echo "=== Keystore exists? ==="
           ls -la android/app/debug.keystore || echo "Keystore NOT FOUND!"
-          echo "=== Using apksigner ==="
-          $ANDROID_HOME/build-tools/36.0.0/apksigner sign \
+          
+          # Find apksigner dynamically
+          APKSIGNER=$ANDROID_HOME/build-tools/$(ls $ANDROID_HOME/build-tools/ | sort -r | head -1)/apksigner
+          echo "=== Using apksigner at: $APKSIGNER ==="
+          if [ ! -f "$APKSIGNER" ]; then
+            echo "ERROR: apksigner not found at $APKSIGNER"
+            ls -la $ANDROID_HOME/build-tools/ 2>/dev/null || echo "build-tools dir missing"
+            exit 1
+          fi
+          
+          $APKSIGNER sign \
             --ks android/app/debug.keystore \
             --ks-pass pass:android \
             --ks-key-alias androiddebugkey \
             --key-pass pass:android \
             "$DEBUG_APK"
+          
           echo "=== Verification ==="
-          $ANDROID_HOME/build-tools/36.0.0/apksigner verify --verbose "$DEBUG_APK" 2>&1 | head -15
+          $APKSIGNER verify --verbose "$DEBUG_APK" 2>&1 | head -15
           ls -lh "$DEBUG_APK"
 
       - name: Build Release APK
@@ -147,15 +157,25 @@ jobs:
           echo "=== Signing: $RELEASE_APK ==="
           echo "=== Keystore exists? ==="
           ls -la android/app/debug.keystore || echo "Keystore NOT FOUND!"
-          echo "=== Using apksigner ==="
-          $ANDROID_HOME/build-tools/36.0.0/apksigner sign \
+          
+          # Find apksigner dynamically
+          APKSIGNER=$ANDROID_HOME/build-tools/$(ls $ANDROID_HOME/build-tools/ | sort -r | head -1)/apksigner
+          echo "=== Using apksigner at: $APKSIGNER ==="
+          if [ ! -f "$APKSIGNER" ]; then
+            echo "ERROR: apksigner not found at $APKSIGNER"
+            ls -la $ANDROID_HOME/build-tools/ 2>/dev/null || echo "build-tools dir missing"
+            exit 1
+          fi
+          
+          $APKSIGNER sign \
             --ks android/app/debug.keystore \
             --ks-pass pass:android \
             --ks-key-alias androiddebugkey \
             --key-pass pass:android \
             "$RELEASE_APK"
+          
           echo "=== Verification ==="
-          $ANDROID_HOME/build-tools/36.0.0/apksigner verify --verbose "$RELEASE_APK" 2>&1 | head -15
+          $APKSIGNER verify --verbose "$RELEASE_APK" 2>&1 | head -15
           ls -lh "$RELEASE_APK"
 
       - name: List generated APKs
