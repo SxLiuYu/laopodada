@@ -1,6 +1,6 @@
-name: Build Android APK (Capacitor)
+'name: Build Android APK (Capacitor)
 
-on:
+'on:
   push:
     branches: [main]
     paths:
@@ -12,7 +12,7 @@ on:
       - '.github/workflows/build-android.yml'
   workflow_dispatch:
 
-jobs:
+jobs:'
   build-android:
     runs-on: ubuntu-22.04
     timeout-minutes: 30
