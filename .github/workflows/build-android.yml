@@ -84,7 +84,7 @@ jobs:
       - name: Configure APK signing
         working-directory: android/app
         run: |
-          # Create debug keystore
+          # Create debug keystore in the same directory
           if [ ! -f debug.keystore ]; then
             keytool -genkey -v \
               -keystore debug.keystore \
@@ -99,7 +99,7 @@ jobs:
           android {
               signingConfigs {
                   signed {
-                      storeFile file('../debug.keystore')
+                      storeFile file('debug.keystore')
                       storePassword 'android'
                       keyAlias 'androiddebugkey'
                       keyPassword 'android'
@@ -120,6 +120,11 @@ jobs:
           # Append signing.gradle to build.gradle
           echo "" >> build.gradle
           echo "apply from: 'signing.gradle'" >> build.gradle
+          
+          echo "=== signing.gradle content ==="
+          cat signing.gradle
+          echo "=== debug.keystore exists ==="
+          ls -la debug.keystore
 
       - name: Build Debug APK (signed)
         working-directory: android
