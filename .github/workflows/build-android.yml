@@ -115,44 +115,11 @@ jobs:
 
       - name: Sign APKs with jarsigner (JDK built-in)
         run: |
-          # Find all APKs
-          echo "=== Finding APKs ==="
-          DEBUG_APK=$(find android/app/build/outputs/apk/debug -name "*.apk" -type f | head -1)
-          RELEASE_APK=$(find android/app/build/outputs/apk/release -name "*.apk" -type f | head -1)
-          echo "DEBUG_APK=$DEBUG_APK"
-          echo "RELEASE_APK=$RELEASE_APK"
-          
-          # Check keystore
-          echo "=== Keystore check ==="
-          if [ -f android/debug.keystore ]; then
-            echo "Keystore found at android/debug.keystore"
-          else
-            echo "ERROR: Keystore not found at android/debug.keystore"
-            ls -la android/ 2>&1
-            exit 1
-          fi
-          
-          # Sign debug APK
-          if [ -n "$DEBUG_APK" ]; then
-            echo "=== Signing debug APK ==="
-            jarsigner -verbose -sigalg SHA1withRSA -digestalg SHA1 \
-              -keystore android/debug.keystore \
-              -storepass android -keypass android \
-              "$DEBUG_APK" androiddebugkey
-            echo "Debug APK signed successfully"
-            jarsigner -verify -certs "$DEBUG_APK" | head -5
-          fi
-          
-          # Sign release APK
-          if [ -n "$RELEASE_APK" ]; then
-            echo "=== Signing release APK ==="
-            jarsigner -verbose -sigalg SHA1withRSA -digestalg SHA1 \
-              -keystore android/debug.keystore \
-              -storepass android -keypass android \
-              "$RELEASE_APK" androiddebugkey
-            echo "Release APK signed successfully"
-            jarsigner -verify -certs "$RELEASE_APK" | head -5
-          fi
+          set -e
+          ls -la android/debug.keystore
+          ls -la android/app/build/outputs/apk/release/*.apk
+          jarsigner -keystore android/debug.keystore -storepass android -keypass android -signedjar android/app/build/outputs/apk/release/app-release-signed.apk android/app/build/outputs/apk/release/app-release-unsigned.apk androiddebugkey
+          ls -la android/app/build/outputs/apk/release/
 
       - name: Upload signing logs
         if: always()
