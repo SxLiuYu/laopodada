@@ -113,7 +113,7 @@ jobs:
           echo "=== Release APKs ==="
           find app/build/outputs/apk/release -name "*.apk" -exec ls -lh {} \; 2>/dev/null || echo "No release APKs"
 
-      - name: Sign APKs with apksigner (post-sign)
+      - name: Sign APKs with jarsigner (JDK built-in)
         run: |
           # Find all APKs
           echo "=== Finding APKs ==="
@@ -123,42 +123,26 @@ jobs:
           DEBUG_APK=$(find android/app/build/outputs/apk/debug -name "*.apk" -type f | head -1)
           if [ -n "$DEBUG_APK" ]; then
             echo "=== Signing debug: $DEBUG_APK ==="
-            echo "Keystore: android/app/debug.keystore"
-            ls -la android/app/debug.keystore
-            
-            # Find apksigner
-            BUILD_TOOLS_DIR=$ANDROID_HOME/build-tools/$(ls $ANDROID_HOME/build-tools/ | sort -r | head -1)
-            APKSIGNER="$BUILD_TOOLS_DIR/apksigner"
-            echo "apksigner at: $APKSIGNER"
-            ls -la "$APKSIGNER"
-            
-            "$APKSIGNER" sign \
-              --ks android/app/debug.keystore \
-              --ks-pass pass:android \
-              --ks-key-alias androiddebugkey \
-              --key-pass pass:android \
-              "$DEBUG_APK" 2>&1 | tee /tmp/sign-debug.log
+            jarsigner -verbose -sigalg SHA1withRSA -digestalg SHA1 \
+              -keystore android/app/debug.keystore \
+              -storepass android -keypass android \
+              "$DEBUG_APK" androiddebugkey 2>&1 | tee /tmp/sign-debug.log
             
             echo "=== Verifying debug APK ==="
-            "$APKSIGNER" verify --verbose "$DEBUG_APK" 2>&1 | tee /tmp/verify-debug.log | head -10
+            jarsigner -verify -certs "$DEBUG_APK" 2>&1 | head -5
           fi
           
           # Sign release APK
           RELEASE_APK=$(find android/app/build/outputs/apk/release -name "*.apk" -type f | head -1)
           if [ -n "$RELEASE_APK" ]; then
             echo "=== Signing release: $RELEASE_APK ==="
-            BUILD_TOOLS_DIR=$ANDROID_HOME/build-tools/$(ls $ANDROID_HOME/build-tools/ | sort -r | head -1)
-            APKSIGNER="$BUILD_TOOLS_DIR/apksigner"
-            
-            "$APKSIGNER" sign \
-              --ks android/app/debug.keystore \
-              --ks-pass pass:android \
-              --ks-key-alias androiddebugkey \
-              --key-pass pass:android \
-              "$RELEASE_APK" 2>&1 | tee /tmp/sign-release.log
+            jarsigner -verbose -sigalg SHA1withRSA -digestalg SHA1 \
+              -keystore android/app/debug.keystore \
+              -storepass android -keypass android \
+              "$RELEASE_APK" androiddebugkey 2>&1 | tee /tmp/sign-release.log
             
             echo "=== Verifying release APK ==="
-            "$APKSIGNER" verify --verbose "$RELEASE_APK" 2>&1 | tee /tmp/verify-release.log | head -10
+            jarsigner -verify -certs "$RELEASE_APK" 2>&1 | head -5
           fi
 
       - name: Upload signing logs
