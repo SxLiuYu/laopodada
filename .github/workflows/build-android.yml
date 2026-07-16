@@ -137,12 +137,21 @@ jobs:
           echo "=== Release APK ==="
           ls -lh app/build/outputs/apk/release/*.apk 2>/dev/null || echo "No release APK"
 
+      - name: List generated APKs
+        run: |
+          echo "=== Debug APKs ==="
+          find android/app/build/outputs/apk/debug -name "*.apk" -exec ls -lh {} \; 2>/dev/null || echo "No debug APKs"
+          echo "=== Release APKs ==="
+          find android/app/build/outputs/apk/release -name "*.apk" -exec ls -lh {} \; 2>/dev/null || echo "No release APKs"
+          echo "=== Full outputs tree ==="
+          find android/app/build/outputs/apk -type f 2>/dev/null | head -20
+
       - name: Upload Debug APK
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: laopodada-debug-apk
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          path: android/app/build/outputs/apk/debug/*.apk
           if-no-files-found: warn
           retention-days: 14
 
@@ -151,6 +160,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: laopodada-release-apk
-          path: android/app/build/outputs/apk/release/
+          path: android/app/build/outputs/apk/release/*.apk
           if-no-files-found: warn
           retention-days: 14
