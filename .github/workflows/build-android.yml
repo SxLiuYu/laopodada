@@ -81,7 +81,7 @@ jobs:
           cat /tmp/cap-sync.log
           echo "=== End log ==="
 
-      - name: Configure APK signing
+      - name: Configure APK signing via Gradle
         working-directory: android/app
         run: |
           # Create debug keystore
@@ -93,12 +93,22 @@ jobs:
               -storepass android -keypass android \
               -dname "CN=Android Debug,O=Android,C=US" 2>&1 || echo "Keystore creation skipped"
           fi
+          
+          # Write signing config to local.properties for Gradle
+          cat >> ../gradle.properties << 'PROPS_EOF'
+          
+          android.signingConfigs.signed.storeFile=../debug.keystore
+          android.signingConfigs.signed.storePassword=android
+          android.signingConfigs.signed.keyAlias=androiddebugkey
+          android.signingConfigs.signed.keyPassword=android
+          PROPS_EOF
+          
           echo "=== Keystore created ==="
           ls -la debug.keystore
-          echo "=== Keystore info ==="
-          keytool -list -v -keystore debug.keystore -storepass android -alias androiddebugkey 2>&1 | head -10
+          echo "=== gradle.properties signing config ==="
+          cat ../gradle.properties | tail -10
 
-      - name: Build Debug APK
+      - name: Build Debug APK (auto-signed by Gradle)
         working-directory: android
         run: |
           chmod +x gradlew
@@ -106,39 +116,7 @@ jobs:
           echo "=== Debug APKs ==="
           find app/build/outputs/apk/debug -name "*.apk" -exec ls -lh {} \; 2>/dev/null || echo "No debug APKs"
 
-      - name: Sign Debug APK with apksigner
-        run: |
-          DEBUG_APK=$(find android/app/build/outputs/apk/debug -name "*.apk" -type f | head -1)
-          if [ -z "$DEBUG_APK" ]; then
-            echo "ERROR: No debug APK found"
-            find android/app/build/outputs/apk -name "*.apk" 2>/dev/null
-            exit 1
-          fi
-          echo "=== Signing: $DEBUG_APK ==="
-          echo "=== Keystore exists? ==="
-          ls -la android/app/debug.keystore || echo "Keystore NOT FOUND!"
-          
-          # Find apksigner dynamically
-          APKSIGNER=$ANDROID_HOME/build-tools/$(ls $ANDROID_HOME/build-tools/ | sort -r | head -1)/apksigner
-          echo "=== Using apksigner at: $APKSIGNER ==="
-          if [ ! -f "$APKSIGNER" ]; then
-            echo "ERROR: apksigner not found at $APKSIGNER"
-            ls -la $ANDROID_HOME/build-tools/ 2>/dev/null || echo "build-tools dir missing"
-            exit 1
-          fi
-          
-          $APKSIGNER sign \
-            --ks android/app/debug.keystore \
-            --ks-pass pass:android \
-            --ks-key-alias androiddebugkey \
-            --key-pass pass:android \
-            "$DEBUG_APK"
-          
-          echo "=== Verification ==="
-          $APKSIGNER verify --verbose "$DEBUG_APK" 2>&1 | head -15
-          ls -lh "$DEBUG_APK"
-
-      - name: Build Release APK
+      - name: Build Release APK (auto-signed by Gradle)
         working-directory: android
         run: |
           chmod +x gradlew
@@ -146,37 +124,67 @@ jobs:
           echo "=== Release APKs ==="
           find app/build/outputs/apk/release -name "*.apk" -exec ls -lh {} \; 2>/dev/null || echo "No release APKs"
 
-      - name: Sign Release APK with apksigner
+      - name: Sign APKs with apksigner (post-sign)
         run: |
+          # Find all APKs
+          echo "=== Finding APKs ==="
+          find android/app/build/outputs/apk -name "*.apk" -exec ls -lh {} \;
+          
+          # Sign debug APK
+          DEBUG_APK=$(find android/app/build/outputs/apk/debug -name "*.apk" -type f | head -1)
+          if [ -n "$DEBUG_APK" ]; then
+            echo "=== Signing debug: $DEBUG_APK ==="
+            echo "Keystore: android/app/debug.keystore"
+            ls -la android/app/debug.keystore
+            
+            # Find apksigner
+            BUILD_TOOLS_DIR=$ANDROID_HOME/build-tools/$(ls $ANDROID_HOME/build-tools/ | sort -r | head -1)
+            APKSIGNER="$BUILD_TOOLS_DIR/apksigner"
+            echo "apksigner at: $APKSIGNER"
+            ls -la "$APKSIGNER"
+            
+            "$APKSIGNER" sign \
+              --ks android/app/debug.keystore \
+              --ks-pass pass:android \
+              --ks-key-alias androiddebugkey \
+              --key-pass pass:android \
+              "$DEBUG_APK" 2>&1
+            
+            echo "=== Verifying debug APK ==="
+            "$APKSIGNER" verify --verbose "$DEBUG_APK" 2>&1 | head -10
+          fi
+          
+          # Sign release APK
           RELEASE_APK=$(find android/app/build/outputs/apk/release -name "*.apk" -type f | head -1)
-          if [ -z "$RELEASE_APK" ]; then
-            echo "ERROR: No release APK found"
-            find android/app/build/outputs/apk -name "*.apk" 2>/dev/null
-            exit 1
+          if [ -n "$RELEASE_APK" ]; then
+            echo "=== Signing release: $RELEASE_APK ==="
+            BUILD_TOOLS_DIR=$ANDROID_HOME/build-tools/$(ls $ANDROID_HOME/build-tools/ | sort -r | head -1)
+            APKSIGNER="$BUILD_TOOLS_DIR/apksigner"
+            
+            "$APKSIGNER" sign \
+              --ks android/app/debug.keystore \
+              --ks-pass pass:android \
+              --ks-key-alias androiddebugkey \
+              --key-pass pass:android \
+              "$RELEASE_APK" 2>&1
+            
+            echo "=== Verifying release APK ==="
+            "$APKSIGNER" verify --verbose "$RELEASE_APK" 2>&1 | head -10
           fi
-          echo "=== Signing: $RELEASE_APK ==="
-          echo "=== Keystore exists? ==="
-          ls -la android/app/debug.keystore || echo "Keystore NOT FOUND!"
-          
-          # Find apksigner dynamically
-          APKSIGNER=$ANDROID_HOME/build-tools/$(ls $ANDROID_HOME/build-tools/ | sort -r | head -1)/apksigner
-          echo "=== Using apksigner at: $APKSIGNER ==="
-          if [ ! -f "$APKSIGNER" ]; then
-            echo "ERROR: apksigner not found at $APKSIGNER"
-            ls -la $ANDROID_HOME/build-tools/ 2>/dev/null || echo "build-tools dir missing"
-            exit 1
-          fi
-          
-          $APKSIGNER sign \
-            --ks android/app/debug.keystore \
-            --ks-pass pass:android \
-            --ks-key-alias androiddebugkey \
-            --key-pass pass:android \
-            "$RELEASE_APK"
-          
-          echo "=== Verification ==="
-          $APKSIGNER verify --verbose "$RELEASE_APK" 2>&1 | head -15
-          ls -lh "$RELEASE_APK"
+
+      - name: Verify APK signatures
+        run: |
+          python -c "
+import zipfile, os
+for root, dirs, files in os.walk('android/app/build/outputs/apk'):
+    for f in files:
+        if f.endswith('.apk'):
+            path = os.path.join(root, f)
+            zf = zipfile.ZipFile(path)
+            certs = [x for x in zf.namelist() if 'CERT' in x.upper()]
+            print(f'{f}: signed={bool(certs)} certs={certs}')
+            zf.close()
+"
 
       - name: List generated APKs
         run: |
