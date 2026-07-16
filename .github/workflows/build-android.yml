@@ -175,10 +175,8 @@ jobs:
       - name: Verify APK signatures
         run: |
           echo "=== Verifying APK signatures ==="
-          for apk in $(find android/app/build/outputs/apk -name "*.apk"); do
-            CERT_COUNT=$(unzip -l "$apk" | grep -c "META-INF/CERT")
-            echo "$apk: CERT files=$CERT_COUNT"
-          done
+          find android/app/build/outputs/apk -name "*.apk" -exec unzip -l {} \; | grep "META-INF/CERT" | head -5
+          echo "=== Done ==="
 
       - name: List generated APKs
         run: |
