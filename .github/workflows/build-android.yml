@@ -94,21 +94,10 @@ jobs:
               -dname "CN=Android Debug,O=Android,C=US" 2>&1 || echo "Keystore creation skipped"
           fi
           
-          # Write signing config to local.properties for Gradle
-          cat >> ../gradle.properties << 'PROPS_EOF'
-          
-          android.signingConfigs.signed.storeFile=../debug.keystore
-          android.signingConfigs.signed.storePassword=android
-          android.signingConfigs.signed.keyAlias=androiddebugkey
-          android.signingConfigs.signed.keyPassword=android
-          PROPS_EOF
-          
           echo "=== Keystore created ==="
           ls -la debug.keystore
-          echo "=== gradle.properties signing config ==="
-          cat ../gradle.properties | tail -10
 
-      - name: Build Debug APK (auto-signed by Gradle)
+      - name: Build Debug APK (unsigned)
         working-directory: android
         run: |
           chmod +x gradlew
@@ -116,7 +105,7 @@ jobs:
           echo "=== Debug APKs ==="
           find app/build/outputs/apk/debug -name "*.apk" -exec ls -lh {} \; 2>/dev/null || echo "No debug APKs"
 
-      - name: Build Release APK (auto-signed by Gradle)
+      - name: Build Release APK (unsigned)
         working-directory: android
         run: |
           chmod +x gradlew
