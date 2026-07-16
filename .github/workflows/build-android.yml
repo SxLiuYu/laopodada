@@ -93,16 +93,20 @@ jobs:
               -storepass android -keypass android \
               -dname "CN=Android Debug,O=Android,C=US" 2>&1 || echo "Keystore creation skipped"
           fi
+          echo "=== Keystore created ==="
+          ls -la debug.keystore
+          echo "=== Keystore info ==="
+          keytool -list -v -keystore debug.keystore -storepass android -alias androiddebugkey 2>&1 | head -10
 
       - name: Build Debug APK
         working-directory: android
         run: |
           chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon --stacktrace 2>&1 | tee /tmp/gradle-debug.log
+          ./gradlew clean assembleDebug --no-daemon --stacktrace 2>&1 | tee /tmp/gradle-debug.log
           echo "=== Debug APKs ==="
           find app/build/outputs/apk/debug -name "*.apk" -exec ls -lh {} \; 2>/dev/null || echo "No debug APKs"
 
-      - name: Sign Debug APK with jarsigner
+      - name: Sign Debug APK with apksigner
         run: |
           DEBUG_APK=$(find android/app/build/outputs/apk/debug -name "*.apk" -type f | head -1)
           if [ -z "$DEBUG_APK" ]; then
@@ -110,24 +114,29 @@ jobs:
             find android/app/build/outputs/apk -name "*.apk" 2>/dev/null
             exit 1
           fi
-          echo "Signing: $DEBUG_APK"
-          jarsigner -verbose -sigalg SHA1withRSA -digestalg SHA1 \
-            -keystore android/app/debug.keystore \
-            -storepass android -keypass android \
-            "$DEBUG_APK" androiddebugkey
+          echo "=== Signing: $DEBUG_APK ==="
+          echo "=== Keystore exists? ==="
+          ls -la android/app/debug.keystore || echo "Keystore NOT FOUND!"
+          echo "=== Using apksigner ==="
+          $ANDROID_HOME/build-tools/36.0.0/apksigner sign \
+            --ks android/app/debug.keystore \
+            --ks-pass pass:android \
+            --ks-key-alias androiddebugkey \
+            --key-pass pass:android \
+            "$DEBUG_APK"
           echo "=== Verification ==="
-          jarsigner -verify -verbose -certs "$DEBUG_APK" 2>&1 | head -10
+          $ANDROID_HOME/build-tools/36.0.0/apksigner verify --verbose "$DEBUG_APK" 2>&1 | head -15
           ls -lh "$DEBUG_APK"
 
       - name: Build Release APK
         working-directory: android
         run: |
           chmod +x gradlew
-          ./gradlew assembleRelease --no-daemon --stacktrace 2>&1 | tee /tmp/gradle-release.log
+          ./gradlew clean assembleRelease --no-daemon --stacktrace 2>&1 | tee /tmp/gradle-release.log
           echo "=== Release APKs ==="
           find app/build/outputs/apk/release -name "*.apk" -exec ls -lh {} \; 2>/dev/null || echo "No release APKs"
 
-      - name: Sign Release APK with jarsigner
+      - name: Sign Release APK with apksigner
         run: |
           RELEASE_APK=$(find android/app/build/outputs/apk/release -name "*.apk" -type f | head -1)
           if [ -z "$RELEASE_APK" ]; then
@@ -135,13 +144,18 @@ jobs:
             find android/app/build/outputs/apk -name "*.apk" 2>/dev/null
             exit 1
           fi
-          echo "Signing: $RELEASE_APK"
-          jarsigner -verbose -sigalg SHA1withRSA -digestalg SHA1 \
-            -keystore android/app/debug.keystore \
-            -storepass android -keypass android \
-            "$RELEASE_APK" androiddebugkey
+          echo "=== Signing: $RELEASE_APK ==="
+          echo "=== Keystore exists? ==="
+          ls -la android/app/debug.keystore || echo "Keystore NOT FOUND!"
+          echo "=== Using apksigner ==="
+          $ANDROID_HOME/build-tools/36.0.0/apksigner sign \
+            --ks android/app/debug.keystore \
+            --ks-pass pass:android \
+            --ks-key-alias androiddebugkey \
+            --key-pass pass:android \
+            "$RELEASE_APK"
           echo "=== Verification ==="
-          jarsigner -verify -verbose -certs "$RELEASE_APK" 2>&1 | head -10
+          $ANDROID_HOME/build-tools/36.0.0/apksigner verify --verbose "$RELEASE_APK" 2>&1 | head -15
           ls -lh "$RELEASE_APK"
 
       - name: List generated APKs
