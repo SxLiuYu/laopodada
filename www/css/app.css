@@ -566,3 +566,179 @@ html, body { height: 100%; font-family: var(--font-sans); color: var(--text-prim
   max-width: 400px;
   margin: 0 auto;
 }
+
+/* ── Enhanced skeleton animations ── */
+.skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  border-radius: var(--r-sm);
+}
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+.skeleton-text {
+  height: 14px;
+  margin-bottom: 8px;
+  border-radius: 4px;
+}
+.skeleton-text.short { width: 60%; }
+.skeleton-circle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+}
+.skeleton-rounded {
+  border-radius: 8px;
+}
+.skeleton-card {
+  height: 120px;
+  margin-bottom: 8px;
+}
+
+/* ── Page loading overlay ── */
+.page-loading {
+  position: fixed;
+  inset: 0;
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+/* ── Dynamic greeting animation ── */
+.greeting-animate {
+  display: inline-block;
+  animation: fadeInUp .5s var(--ease) forwards;
+}
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Card hover effects ── */
+.item-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.outfit-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+.article-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+/* ── Smooth scroll behavior ── */
+html {
+  scroll-behavior: smooth;
+}
+
+/* ── Custom scrollbar ── */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+
+/* ── Focus ring for accessibility ── */
+.btn-primary:focus, .btn-outline:focus, input:focus, textarea:focus, select:focus {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* ── Empty state enhancements ── */
+.empty-state .emoji {
+  font-size: 48px;
+  margin-bottom: 12px;
+  display: block;
+  animation: bounceIn .5s var(--ease) forwards;
+  opacity: 0;
+}
+@keyframes bounceIn {
+  0% { opacity: 0; transform: scale(0.3); }
+  50% { opacity: 1; transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+.empty-state {
+  text-align: center;
+  padding: 48px var(--sp-5);
+  color: var(--text-hint);
+  font-size: var(--fs-md);
+}
+
+/* ── Toast enhancements ── */
+#toast {
+  position: fixed;
+  bottom: 70px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: rgba(0,0,0,.78);
+  color: #fff;
+  padding: 10px var(--sp-4);
+  border-radius: var(--r-full);
+  font-size: var(--fs-base);
+  z-index: 1000;
+  opacity: 0;
+  transition: opacity .3s var(--ease), transform .3s var(--ease);
+  pointer-events: none;
+  backdrop-filter: blur(8px);
+  box-shadow: var(--shadow-md);
+}
+#toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ── Success toast variant ── */
+#toast.success {
+  background: rgba(39, 170, 96, .85);
+}
+
+/* ── Error toast variant ── */
+#toast.error {
+  background: rgba(231, 76, 60, .85);
+}
+
+/* ── Loading spinner ── */
+.loading-spinner {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--border-input);
+  border-radius: 50%;
+  border-top-color: var(--primary);
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Progress bar ── */
+.progress-bar {
+  width: 100%;
+  height: 6px;
+  background: var(--border);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: var(--gradient);
+  border-radius: 3px;
+  transition: width .3s var(--ease);
+  width: 0;
+}
+.progress-fill.ready {
+  width: 100%;
+}

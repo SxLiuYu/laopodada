@@ -301,3 +301,46 @@ window.api = {
   // 记账
   listExpenses, expensesSummary, createExpense, deleteExpense,
 };
+
+/* ════════════════════════════════════════════
+   健康文章 API
+   ════════════════════════════════════════════ */
+
+async function listHealthArticles(category, limit = 50) {
+  if (_devGuard('listHealthArticles')) return _mockResponse({ count: 0, articles: [] });
+  const params = new URLSearchParams();
+  if (category) params.set('category', category);
+  params.set('limit', String(limit));
+  const res = await fetch(`${window.API_BASE}/api/v1/health/articles?` + params.toString());
+  if (!res.ok) throw new Error('list health articles failed');
+  return res.json();
+}
+
+async function getHealthArticle(id) {
+  if (_devGuard('getHealthArticle')) return _mockResponse({ article: { id } });
+  const res = await fetch(`${window.API_BASE}/api/v1/health/articles/${id}`);
+  if (!res.ok) throw new Error('get health article failed');
+  return res.json();
+}
+
+async function generateHealthArticle(topic, category = '') {
+  if (_devGuard('generateHealthArticle')) return _mockResponse({ article: { id: 'mock', title: '示例健康文章', content: '示例内容' } });
+  const res = await fetch(`${window.API_BASE}/api/v1/health/articles/generate`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ topic, category }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || `生成失败: HTTP ${res.status}`);
+  return data;
+}
+
+/* ════════════════════════════════════════════
+   window.api 命名空间 (更新)
+   ════════════════════════════════════════════ */
+
+window.api.health = {
+  listHealthArticles,
+  getHealthArticle,
+  generateHealthArticle,
+};
